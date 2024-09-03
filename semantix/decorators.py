@@ -1,7 +1,15 @@
-from typing import Callable
-from semantix.types import Semantic
+from typing import Callable, List
+from semantix.types import Semantic, Tool
 
-def with_llm(meaning: str, model, info: list = [], method: str = 'Normal', tools: list[Callable]= [], **kwargs):
+
+def with_llm(
+    meaning: str,
+    model,
+    info: list = [],
+    method: str = "Normal",
+    tools: List[Callable] = [],
+    **kwargs,
+):
     def decorator(func):
         def wrapper(*args, **kwargs):
             print(*args)
@@ -13,5 +21,14 @@ def with_llm(meaning: str, model, info: list = [], method: str = 'Normal', tools
                 else:
                     print(f"{param}: {annotation}")
             return func(*args, **kwargs)
+
         return wrapper
+
+    return decorator
+
+
+def tool(meaning: str) -> Tool:
+    def decorator(func):
+        return Tool(func, meaning)
+
     return decorator
