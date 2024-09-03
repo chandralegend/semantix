@@ -61,18 +61,34 @@ class Semantic(Generic[T], metaclass=SemanticMeta):
 
 
 class SemanticClass:
-    def init(self, **kwargs):
-        raise NotImplementedError
+    @classmethod
+    def init(cls, *args, **kwargs):
+        return cls.__class__(*args, **kwargs)
 
     def __object_repr__(self):
-        raise NotImplementedError
+        semstr = self.__class__.__doc__
+        _name = self.__class__.__name__
+        var_name = [
+            var
+            for var, val in inspect.currentframe().f_back.f_locals.items()
+            if val is self
+        ][0]
+        return f"{semstr} ({var_name}) ({_name}) = {get_object_string(self)}".strip()
 
     @classmethod
     def __type_repr__(cls):
         semstr = cls.__doc__
         _name = cls.__name__
-        _type = "class"
-        return f"{_type} {_name} {semstr}"
+        usage_example_list = []
+        for param, annotation in cls.__init__.__annotations__.items():
+            if isinstance(annotation, type) and issubclass(annotation, Semantic):
+                usage_example_list.append(
+                    f'{param}="{annotation._meaning}":{get_type(annotation.wrapped_type)}'
+                )
+            else:
+                usage_example_list.append(f"{param}={get_type(annotation)}")
+        usage_example = ", ".join(usage_example_list)
+        return f"{semstr} ({_name}) (class) eg:- {usage_example}".strip()
 
 
 class InputInformation:
