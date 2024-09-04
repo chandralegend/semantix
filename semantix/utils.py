@@ -2,10 +2,8 @@ import re
 from enum import Enum
 from typing import Any
 import sys
-import inspect
 import importlib
 import ast
-from varname import nameof
 
 
 def get_type(_type: Any) -> str:  # noqa: ANN401
