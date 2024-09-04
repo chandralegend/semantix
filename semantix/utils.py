@@ -3,7 +3,9 @@ from enum import Enum
 from typing import Any
 import sys
 import inspect
+import importlib
 import ast
+from varname import nameof
 
 
 def get_type(_type: Any) -> str:  # noqa: ANN401
@@ -92,8 +94,7 @@ def get_type_from_value(data: Any) -> str:  # noqa: ANN401
         return str(type(data).__name__)
 
 
-def get_meaning(obj, var_name="", module=""):
-    frame = inspect.currentframe().f_back
+def get_semstr(frame, obj, var_name="", module=""):
     var_name = (
         next((var for var, val in frame.f_locals.items() if val is obj), None)
         if not var_name
@@ -111,6 +112,6 @@ def get_meaning(obj, var_name="", module=""):
                 for alias in node.names:
                     if alias.name == var_name:
                         module = importlib.import_module(node.module)
-                        meaning = get_meaning(obj, var_name, module)
+                        var_name, meaning = get_semstr(frame, obj, var_name, module)
                         break
-    return meaning
+    return var_name, meaning

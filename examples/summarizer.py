@@ -27,4 +27,4 @@ mined uranium. All reactors breed some plutonium-239, which is found in the spen
 preferred material for nuclear weapons, reprocessing is seen as a weapon proliferation risk.
 """
 
-summarize(text)
+summarize(text=text)
