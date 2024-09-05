@@ -1,6 +1,7 @@
-from typing import Generic, TypeVar, Type, Any, Callable, Dict, List
+from typing import Generic, TypeVar, Type, Any, Callable, Dict, List, Union
 import sys
 import inspect
+from enum import Enum
 
 from semantix.utils import (
     extract_non_primary_type,
@@ -57,22 +58,21 @@ class SemanticClass:
     def init(cls, *args, **kwargs):
         return cls.__class__(*args, **kwargs)
 
-    def __object_repr__(self):
-        semstr = self.__class__.__doc__ if self.__class__.__doc__ else ""
-        _name = self.__class__.__name__
-        var_name = [
-            var
-            for var, val in inspect.currentframe().f_back.f_locals.items()
-            if val is self
-        ][0]
-        return f"{semstr} ({var_name}) ({_name}) = {get_object_string(self)}".strip()
 
-    @classmethod
-    def __type_repr__(cls):
-        semstr = cls.__doc__ if cls.__doc__ else ""
-        _name = cls.__name__
+class TypeExplanation:
+    def __init__(self, frame, type: str) -> None:  # noqa: ANN401
+        """Initializes the TypeExplanation class."""
+        self.type = frame.f_globals[type]
+
+    def get_type_repr(self) -> str:
+        """Get the type representation."""
+        semstr = self.type.__doc__ if self.type.__doc__ else ""
+        _name = self.type.__name__
         usage_example_list = []
-        for param, annotation in cls.__init__.__annotations__.items():
+        print(self.type)
+        for param, annotation in self.type.__init__.__annotations__.items():
+            if param == "return":
+                continue
             if isinstance(annotation, type) and issubclass(annotation, Semantic):
                 usage_example_list.append(
                     f'{param}="{annotation._meaning}":{get_type(annotation.wrapped_type)}'
@@ -82,24 +82,40 @@ class SemanticClass:
         usage_example = ", ".join(usage_example_list)
         return f"{semstr} ({_name}) (class) eg:- {usage_example}".strip()
 
-
-class InputInformation:
-    """Class to represent the input information."""
-
-    def __init__(self, semstr: str, name: str, value: Any) -> None:  # noqa: ANN401
-        """Initializes the InputInformation class."""
-        self.semstr = semstr
-        self.name = name
-        self.value = value
+    def get_type_repr_enum(self) -> str:
+        """Get the type representation."""
+        semstr = self.type.__doc__ if self.type.__doc__ else ""
+        _name = self.type.__name__
+        usage_example_list = []
+        for param, _ in self.type.__members__.items():
+            usage_example_list.append(f"{_name}.{param}")
+        usage_example = ", ".join(usage_example_list)
+        return f"{semstr} ({_name}) (enum) eg:- {usage_example}".strip()
 
     def __str__(self) -> str:
-        """Returns the string representation of the InputInformation class."""
-        type_anno = get_type_from_value(self.value)
-        return f"{self.semstr if self.semstr else ''} ({self.name}) ({type_anno}) = {get_object_string(self.value)}".strip()  # noqa: E501
+        """Returns the string representation of the TypeExplanation class."""
+        if issubclass(self.type, Enum):
+            return self.get_type_repr_enum()
+        return self.get_type_repr()
 
-    def to_list_dict(self) -> List[Dict]:
+
+class Information:
+    """Class to represent the information."""
+
+    def __init__(self, semstr: str, name: str, value: Any) -> None:
+        """Initializes the Information class."""
+        self.value = value
+        self.name = name
+        self.semstr = semstr
+
+    @property
+    def type(self) -> str:
+        """Get the type of the information."""
+        return get_type_from_value(self.value)
+
+    def get_content(self, contains_media: bool) -> Union[List[Dict], str]:
         """Returns the list of dictionaries representation of the InputInformation class."""
-        input_type = get_type_from_value(self.value)
+        input_type = self.type
         if input_type == "Image":
             img_base64, img_type = self.value.process()
             return [
@@ -130,16 +146,24 @@ class InputInformation:
                     for frame in video_frames
                 ),
             ]
-        return [
-            {
-                "type": "text",
-                "text": str(self),
-            }
-        ]
+        return (
+            str(self)
+            if not contains_media
+            else [
+                {
+                    "type": "text",
+                    "text": str(self),
+                }
+            ]
+        )
+
+    def __str__(self) -> str:
+        """Returns the string representation of the Information class."""
+        return f"{self.semstr} ({self.name}) ({self.type}) = {get_object_string(self.value)}".strip()
 
     def get_types(self) -> list:
-        """Get the types of the input."""
-        return extract_non_primary_type(get_type_from_value(self.value))
+        """Get the types of the information."""
+        return extract_non_primary_type(self.type)
 
 
 class OutputHint:
@@ -156,25 +180,6 @@ class OutputHint:
 
     def get_types(self) -> list:
         """Get the types of the output."""
-        return extract_non_primary_type(self.type)
-
-
-class Information:
-    """Class to represent the information."""
-
-    def __init__(self, value: Any, name: str, semstr: str) -> None:
-        """Initializes the Information class."""
-        self.value = value
-        self.name = name
-        self.semstr = semstr
-
-    def __str__(self) -> str:
-        """Returns the string representation of the Information class."""
-        type_anno = get_type_from_value(self.value)
-        return f"{self.semstr} ({self.name}) ({type_anno}) = {get_object_string(self.value)}".strip()
-
-    def get_types(self) -> list:
-        """Get the types of the information."""
         return extract_non_primary_type(self.type)
 
 

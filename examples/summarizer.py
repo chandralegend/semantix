@@ -1,6 +1,7 @@
 from semantix import Semantic, with_llm
+from semantix.llms.base import BaseLLM
 
-llm = None  # Replace with the LLM model
+llm = BaseLLM()  # Replace with the LLM model
 
 
 @with_llm("Summarize the Given Text", llm)

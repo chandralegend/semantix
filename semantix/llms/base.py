@@ -136,252 +136,275 @@ Provide the output in the below format. Where tool_usage is a function call with
 class BaseLLM:
     """Base Large Language Model (LLM) class."""
 
-    MTLLM_SYSTEM_PROMPT: str = SYSTEM_PROMPT
-    MTLLM_PROMPT: str = PROMPT_TEMPLATE
-    MTLLM_METHOD_PROMPTS: dict[str, str] = {
-        "Normal": NORMAL_SUFFIX,
-        "Reason": REASON_SUFFIX,
-        "Chain-of-Thoughts": CHAIN_OF_THOUGHT_SUFFIX,
-        "ReAct": REACT_SUFFIX,
+    message_desc = {
+        "informations": "[Information]",
+        "input_informations": "[Inputs Information]",
+        "context": "[Context]",
+        "type_explanations": "[Type Explanations]",
+        "return_hint": "[Output Information]",
+        "action": "[Action]",
+        "tools": "[Tools]",
     }
-    OUTPUT_EXTRACT_PROMPT: str = MTLLM_OUTPUT_EXTRACT_PROMPT
-    OUTPUT_CHECK_PROMPT: str = OUTPUT_CHECK_PROMPT
-    OUTPUT_FIX_PROMPT: str = OUTPUT_FIX_PROMPT
-    REACT_OUTPUT_FIX_PROMPT: str = REACT_OUTPUT_FIX_PROMPT
+    system_prompt = "This is an operation you must perform and return the output values. Neither, the methodology, extra sentences nor the code are not needed. Input/Type formatting: Explanation of the Input (variable_name) (type) = value"
 
-    def __init__(
-        self, verbose: bool = False, max_tries: int = 10, type_check: bool = False
-    ) -> None:
-        """Initialize the Large Language Model (LLM) client."""
-        self.verbose = verbose
-        self.max_tries = max_tries
-        self.type_check = type_check
+    def get_message_desc(self, key: str) -> str:
+        """Get the message description."""
+        return self.message_desc[key]
 
-    def __infer__(self, meaning_in: str | list[dict], **kwargs: dict) -> str:
-        """Infer a response from the input meaning."""
-        raise NotImplementedError
+    @property
+    def system_message(self) -> dict:
+        return {"role": "system", "content": self.system_prompt}
 
-    def __call__(self, input_text: str | list[dict], **kwargs: dict) -> str:
-        """Infer a response from the input text."""
-        if self.verbose:
-            logger.info(f"Meaning In\n{input_text}")
-        return self.__infer__(input_text, **kwargs)
 
-    def resolve_output(
-        self,
-        meaning_out: str,
-        output_hint: OutputHint,
-        output_type_explanations: list[TypeExplanation],
-        _globals: dict,
-        _locals: Mapping,
-    ) -> Any:  # noqa: ANN401
-        """Resolve the output string to return the reasoning and output."""
-        if self.verbose:
-            logger.info(f"Meaning Out\n{meaning_out}")
-        output_match = re.search(r"\[Output\](.*)", meaning_out, re.DOTALL)
-        if not output_match:
-            output = self._extract_output(
-                meaning_out,
-                output_hint,
-                output_type_explanations,
-                self.max_tries,
-            )
-        else:
-            output = output_match.group(1).strip()
-        if self.type_check:
-            is_in_desired_format = self._check_output(
-                output, output_hint.type, output_type_explanations
-            )
-            if not is_in_desired_format:
-                output = self._extract_output(
-                    meaning_out,
-                    output_hint,
-                    output_type_explanations,
-                    self.max_tries,
-                    output,
-                )
+# class BaseLLM:
+#     """Base Large Language Model (LLM) class."""
 
-        return self.to_object(
-            output, output_hint, output_type_explanations, _globals, _locals
-        )
+#     MTLLM_SYSTEM_PROMPT: str = SYSTEM_PROMPT
+#     MTLLM_PROMPT: str = PROMPT_TEMPLATE
+#     MTLLM_METHOD_PROMPTS: dict[str, str] = {
+#         "Normal": NORMAL_SUFFIX,
+#         "Reason": REASON_SUFFIX,
+#         "Chain-of-Thoughts": CHAIN_OF_THOUGHT_SUFFIX,
+#         "ReAct": REACT_SUFFIX,
+#     }
+#     OUTPUT_EXTRACT_PROMPT: str = MTLLM_OUTPUT_EXTRACT_PROMPT
+#     OUTPUT_CHECK_PROMPT: str = OUTPUT_CHECK_PROMPT
+#     OUTPUT_FIX_PROMPT: str = OUTPUT_FIX_PROMPT
+#     REACT_OUTPUT_FIX_PROMPT: str = REACT_OUTPUT_FIX_PROMPT
 
-    def resolve_react_output(
-        self,
-        meaning_out: str,
-        _globals: dict,
-        _locals: Mapping,
-        tool_explanations: str,
-        type_explanations: str,
-    ) -> ReActOutput:
-        """Resolve the output string to return the reasoning and output."""
-        if self.verbose:
-            logger.info(f"Meaning Out\n{meaning_out}")
-        try:
-            thought_match = re.search(
-                r"\[Thought\](.*)\[Tool Usage\]", meaning_out, re.DOTALL
-            )
-            tool_usage_match = re.search(r"\[Tool Usage\](.*)", meaning_out, re.DOTALL)
-            if not thought_match or not tool_usage_match:
-                raise ValueError("Failed to find Thought or Tool Usage in the output.")
-            thought = thought_match.group(1).strip()
-            tool_usage = tool_usage_match.group(1).strip()
-            try:
-                output = eval(tool_usage, _globals, _locals)
-            except Exception as e:
-                return ReActOutput(
-                    thought=thought, action=tool_usage, observation=str(e)
-                )
-            return ReActOutput(thought=thought, action=tool_usage, observation=output)
-        except Exception as e:
-            print(e)
-            new_meaning_out = self._fix_react_output(
-                meaning_out, e, tool_explanations, type_explanations
-            )
-            return self.resolve_react_output(
-                new_meaning_out, _globals, _locals, tool_explanations, type_explanations
-            )
+#     def __init__(
+#         self, verbose: bool = False, max_tries: int = 10, type_check: bool = False
+#     ) -> None:
+#         """Initialize the Large Language Model (LLM) client."""
+#         self.verbose = verbose
+#         self.max_tries = max_tries
+#         self.type_check = type_check
 
-    def _fix_react_output(
-        self,
-        meaning_out: str,
-        error: Exception,
-        tool_explanations: str,
-        type_explanations: str,
-    ) -> str:
-        """Fix the output string."""
-        if self.verbose:
-            logger.info(f"Error: {error}, Fixing the output.")
-        react_output_fix_prompt = self.REACT_OUTPUT_FIX_PROMPT.format(
-            model_output=meaning_out,
-            error=str(error),
-            tool_explanations=tool_explanations,
-            type_explanations=type_explanations,
-        )
-        return self.__infer__(react_output_fix_prompt)
+#     def __infer__(self, meaning_in: str | list[dict], **kwargs: dict) -> str:
+#         """Infer a response from the input meaning."""
+#         raise NotImplementedError
 
-    def _check_output(
-        self,
-        output: str,
-        output_type: str,
-        output_type_explanations: list[TypeExplanation],
-    ) -> bool:
-        """Check if the output is in the desired format."""
-        output_check_prompt = self.OUTPUT_CHECK_PROMPT.format(
-            model_output=output,
-            output_type=output_type,
-            output_type_info="\n".join(
-                [str(info) for info in output_type_explanations]
-            ),
-        )
-        llm_output = self.__infer__(output_check_prompt)
-        return "yes" in llm_output.lower()
+#     def __call__(self, input_text: str | list[dict], **kwargs: dict) -> str:
+#         """Infer a response from the input text."""
+#         if self.verbose:
+#             logger.info(f"Meaning In\n{input_text}")
+#         return self.__infer__(input_text, **kwargs)
 
-    def _extract_output(
-        self,
-        meaning_out: str,
-        output_hint: OutputHint,
-        output_type_explanations: list[TypeExplanation],
-        max_tries: int,
-        previous_output: str = "None",
-    ) -> str:
-        """Extract the output from the meaning out string."""
-        if max_tries == 0:
-            logger.error("Failed to extract output. Max tries reached.")
-            raise ValueError(
-                "Failed to extract output. Try Changing the Semstrings, provide examples or change the method."
-            )
+#     def resolve_output(
+#         self,
+#         meaning_out: str,
+#         output_hint: OutputHint,
+#         output_type_explanations: list[TypeExplanation],
+#         _globals: dict,
+#         _locals: Mapping,
+#     ) -> Any:  # noqa: ANN401
+#         """Resolve the output string to return the reasoning and output."""
+#         if self.verbose:
+#             logger.info(f"Meaning Out\n{meaning_out}")
+#         output_match = re.search(r"\[Output\](.*)", meaning_out, re.DOTALL)
+#         if not output_match:
+#             output = self._extract_output(
+#                 meaning_out,
+#                 output_hint,
+#                 output_type_explanations,
+#                 self.max_tries,
+#             )
+#         else:
+#             output = output_match.group(1).strip()
+#         if self.type_check:
+#             is_in_desired_format = self._check_output(
+#                 output, output_hint.type, output_type_explanations
+#             )
+#             if not is_in_desired_format:
+#                 output = self._extract_output(
+#                     meaning_out,
+#                     output_hint,
+#                     output_type_explanations,
+#                     self.max_tries,
+#                     output,
+#                 )
 
-        if self.verbose:
-            if max_tries < self.max_tries:
-                logger.info(
-                    f"Failed to extract output. Trying to extract output again. Max tries left: {max_tries}"
-                )
-            else:
-                logger.info("Extracting output from the meaning out string.")
+#         return self.to_object(
+#             output, output_hint, output_type_explanations, _globals, _locals
+#         )
 
-        output_extract_prompt = self.OUTPUT_EXTRACT_PROMPT.format(
-            model_output=meaning_out,
-            previous_output=previous_output,
-            output_info=str(output_hint),
-            output_type_info="\n".join(
-                [str(info) for info in output_type_explanations]
-            ),
-        )
-        llm_output = self.__infer__(output_extract_prompt)
-        is_in_desired_format = self._check_output(
-            llm_output, output_hint.type, output_type_explanations
-        )
-        if self.verbose:
-            logger.info(
-                f"Extracted Output: {llm_output}. Is in Desired Format: {is_in_desired_format}"
-            )
-        if is_in_desired_format:
-            return llm_output
-        return self._extract_output(
-            meaning_out,
-            output_hint,
-            output_type_explanations,
-            max_tries - 1,
-            llm_output,
-        )
+#     def resolve_react_output(
+#         self,
+#         meaning_out: str,
+#         _globals: dict,
+#         _locals: Mapping,
+#         tool_explanations: str,
+#         type_explanations: str,
+#     ) -> ReActOutput:
+#         """Resolve the output string to return the reasoning and output."""
+#         if self.verbose:
+#             logger.info(f"Meaning Out\n{meaning_out}")
+#         try:
+#             thought_match = re.search(
+#                 r"\[Thought\](.*)\[Tool Usage\]", meaning_out, re.DOTALL
+#             )
+#             tool_usage_match = re.search(r"\[Tool Usage\](.*)", meaning_out, re.DOTALL)
+#             if not thought_match or not tool_usage_match:
+#                 raise ValueError("Failed to find Thought or Tool Usage in the output.")
+#             thought = thought_match.group(1).strip()
+#             tool_usage = tool_usage_match.group(1).strip()
+#             try:
+#                 output = eval(tool_usage, _globals, _locals)
+#             except Exception as e:
+#                 return ReActOutput(
+#                     thought=thought, action=tool_usage, observation=str(e)
+#                 )
+#             return ReActOutput(thought=thought, action=tool_usage, observation=output)
+#         except Exception as e:
+#             print(e)
+#             new_meaning_out = self._fix_react_output(
+#                 meaning_out, e, tool_explanations, type_explanations
+#             )
+#             return self.resolve_react_output(
+#                 new_meaning_out, _globals, _locals, tool_explanations, type_explanations
+#             )
 
-    def to_object(
-        self,
-        output: str,
-        output_hint: OutputHint,
-        output_type_explanations: list[TypeExplanation],
-        _globals: dict,
-        _locals: Mapping,
-        error: Optional[Exception] = None,
-        num_retries: int = 0,
-    ) -> Any:  # noqa: ANN401
-        """Convert the output string to an object."""
-        if num_retries >= self.max_tries:
-            raise ValueError("Failed to convert output to object. Max tries reached.")
-        if output_hint.type == "str":
-            return output
-        if error:
-            fixed_output = self._fix_output(
-                output, output_hint, output_type_explanations, error
-            )
-            return self.to_object(
-                fixed_output,
-                output_hint,
-                output_type_explanations,
-                _globals,
-                _locals,
-                num_retries=num_retries + 1,
-            )
+#     def _fix_react_output(
+#         self,
+#         meaning_out: str,
+#         error: Exception,
+#         tool_explanations: str,
+#         type_explanations: str,
+#     ) -> str:
+#         """Fix the output string."""
+#         if self.verbose:
+#             logger.info(f"Error: {error}, Fixing the output.")
+#         react_output_fix_prompt = self.REACT_OUTPUT_FIX_PROMPT.format(
+#             model_output=meaning_out,
+#             error=str(error),
+#             tool_explanations=tool_explanations,
+#             type_explanations=type_explanations,
+#         )
+#         return self.__infer__(react_output_fix_prompt)
 
-        try:
-            return eval(output, _globals, _locals)
-        except Exception as e:
-            return self.to_object(
-                output,
-                output_hint,
-                output_type_explanations,
-                _globals,
-                _locals,
-                error=e,
-                num_retries=num_retries + 1,
-            )
+#     def _check_output(
+#         self,
+#         output: str,
+#         output_type: str,
+#         output_type_explanations: list[TypeExplanation],
+#     ) -> bool:
+#         """Check if the output is in the desired format."""
+#         output_check_prompt = self.OUTPUT_CHECK_PROMPT.format(
+#             model_output=output,
+#             output_type=output_type,
+#             output_type_info="\n".join(
+#                 [str(info) for info in output_type_explanations]
+#             ),
+#         )
+#         llm_output = self.__infer__(output_check_prompt)
+#         return "yes" in llm_output.lower()
 
-    def _fix_output(
-        self,
-        output: str,
-        output_hint: OutputHint,
-        output_type_explanations: List[TypeExplanation],
-        error: Exception,
-    ) -> str:
-        """Fix the output string."""
-        if self.verbose:
-            logger.info(f"Error: {error}, Fixing the output.")
-        output_fix_prompt = self.OUTPUT_FIX_PROMPT.format(
-            model_output=output,
-            output_type=output_hint.type,
-            output_type_info="\n".join(
-                [str(info) for info in output_type_explanations]
-            ),
-            error=error,
-        )
-        return self.__infer__(output_fix_prompt)
+#     def _extract_output(
+#         self,
+#         meaning_out: str,
+#         output_hint: OutputHint,
+#         output_type_explanations: list[TypeExplanation],
+#         max_tries: int,
+#         previous_output: str = "None",
+#     ) -> str:
+#         """Extract the output from the meaning out string."""
+#         if max_tries == 0:
+#             logger.error("Failed to extract output. Max tries reached.")
+#             raise ValueError(
+#                 "Failed to extract output. Try Changing the Semstrings, provide examples or change the method."
+#             )
+
+#         if self.verbose:
+#             if max_tries < self.max_tries:
+#                 logger.info(
+#                     f"Failed to extract output. Trying to extract output again. Max tries left: {max_tries}"
+#                 )
+#             else:
+#                 logger.info("Extracting output from the meaning out string.")
+
+#         output_extract_prompt = self.OUTPUT_EXTRACT_PROMPT.format(
+#             model_output=meaning_out,
+#             previous_output=previous_output,
+#             output_info=str(output_hint),
+#             output_type_info="\n".join(
+#                 [str(info) for info in output_type_explanations]
+#             ),
+#         )
+#         llm_output = self.__infer__(output_extract_prompt)
+#         is_in_desired_format = self._check_output(
+#             llm_output, output_hint.type, output_type_explanations
+#         )
+#         if self.verbose:
+#             logger.info(
+#                 f"Extracted Output: {llm_output}. Is in Desired Format: {is_in_desired_format}"
+#             )
+#         if is_in_desired_format:
+#             return llm_output
+#         return self._extract_output(
+#             meaning_out,
+#             output_hint,
+#             output_type_explanations,
+#             max_tries - 1,
+#             llm_output,
+#         )
+
+#     def to_object(
+#         self,
+#         output: str,
+#         output_hint: OutputHint,
+#         output_type_explanations: list[TypeExplanation],
+#         _globals: dict,
+#         _locals: Mapping,
+#         error: Optional[Exception] = None,
+#         num_retries: int = 0,
+#     ) -> Any:  # noqa: ANN401
+#         """Convert the output string to an object."""
+#         if num_retries >= self.max_tries:
+#             raise ValueError("Failed to convert output to object. Max tries reached.")
+#         if output_hint.type == "str":
+#             return output
+#         if error:
+#             fixed_output = self._fix_output(
+#                 output, output_hint, output_type_explanations, error
+#             )
+#             return self.to_object(
+#                 fixed_output,
+#                 output_hint,
+#                 output_type_explanations,
+#                 _globals,
+#                 _locals,
+#                 num_retries=num_retries + 1,
+#             )
+
+#         try:
+#             return eval(output, _globals, _locals)
+#         except Exception as e:
+#             return self.to_object(
+#                 output,
+#                 output_hint,
+#                 output_type_explanations,
+#                 _globals,
+#                 _locals,
+#                 error=e,
+#                 num_retries=num_retries + 1,
+#             )
+
+#     def _fix_output(
+#         self,
+#         output: str,
+#         output_hint: OutputHint,
+#         output_type_explanations: List[TypeExplanation],
+#         error: Exception,
+#     ) -> str:
+#         """Fix the output string."""
+#         if self.verbose:
+#             logger.info(f"Error: {error}, Fixing the output.")
+#         output_fix_prompt = self.OUTPUT_FIX_PROMPT.format(
+#             model_output=output,
+#             output_type=output_hint.type,
+#             output_type_info="\n".join(
+#                 [str(info) for info in output_type_explanations]
+#             ),
+#             error=error,
+#         )
+#         return self.__infer__(output_fix_prompt)

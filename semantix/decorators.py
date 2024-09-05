@@ -1,6 +1,7 @@
-from typing import Callable, List
-from semantix.types import Semantic, Tool, Information, InputInformation, OutputHint
-from semantix.utils import get_semstr
+from typing import Callable, List, Union
+from semantix.types import Semantic, Tool, Information, OutputHint, TypeExplanation
+from semantix.inference import InferenceEngine, PromptInfo
+from semantix.utils import get_semstr, extract_non_primary_type
 import inspect
 
 
@@ -9,15 +10,16 @@ def with_llm(
     model,
     info: list = [],
     method: str = "Normal",
-    tools: List[Callable] = [],
-    **kwargs,
+    tools: List[Union[Callable, Tool]] = [],
+    model_params: dict = {},
 ):
     frame = inspect.currentframe().f_back
 
     def decorator(func):
-        def wrapper(*args, **kwargs):
-            information = [Information(obj, *get_semstr(frame, obj)) for obj in info]
-            input_information = []
+        def wrapper(**kwargs):
+            informations = [Information(obj, *get_semstr(frame, obj)) for obj in info]
+            _tools = [tool if isinstance(tool, Tool) else Tool(tool) for tool in tools]
+            input_informations = []
             return_hint = None
             for param, annotation in func.__annotations__.items():
                 if isinstance(annotation, type) and issubclass(annotation, Semantic):
@@ -26,27 +28,41 @@ def with_llm(
                             annotation._meaning, annotation.wrapped_type
                         )
                         continue
-                    input_information.append(
-                        InputInformation(annotation._meaning, param, kwargs[param])
+                    input_informations.append(
+                        Information(annotation._meaning, param, kwargs[param])
                     )
                 else:
                     if param == "return":
                         return_hint = OutputHint("", annotation)
                         continue
-                    input_information.append(InputInformation("", param, kwargs[param]))
-            action = f"{func.__name__} {meaning}"
+                    input_informations.append(Information("", param, kwargs[param]))
+            action = f"{meaning} ({func.__name__})"
             context = func.__doc__
-            print(
-                f"""
-            Action: {action}
-            Context: {context}
-            Information: {[str(i) for i in information]}
-            Input Information: {[str(i) for i in input_information]}
-            Tools: {[str(t) for t in tools]}
-            Return Hint: {return_hint}
-            """
+
+            types = set()
+            for i in [
+                *informations,
+                *input_informations,
+                return_hint if return_hint else [],
+            ]:
+                types.update(extract_non_primary_type(i.type))
+            type_explanations = [TypeExplanation(frame, t) for t in types]
+
+            inference_engine = InferenceEngine(
+                model=model,
+                method=method,
+                prompt_info=PromptInfo(
+                    action=action,
+                    context=context,
+                    informations=informations,
+                    input_informations=input_informations,
+                    tools=_tools,
+                    return_hint=return_hint,
+                    type_explanations=type_explanations,
+                ),
+                model_params=model_params,
             )
-            return func(*args, **kwargs)
+            return inference_engine.run()
 
         return wrapper
 
