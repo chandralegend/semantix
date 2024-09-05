@@ -1,7 +1,7 @@
 from semantix import Semantic, with_llm
-from semantix.llms.base import BaseLLM
+from semantix.llms.openai import OpenAI
 
-llm = BaseLLM()  # Replace with the LLM model
+llm = OpenAI(verbose=True)
 
 
 @with_llm("Summarize the Given Text", llm)
@@ -28,4 +28,4 @@ mined uranium. All reactors breed some plutonium-239, which is found in the spen
 preferred material for nuclear weapons, reprocessing is seen as a weapon proliferation risk.
 """
 
-summarize(text=text)
+print(summarize(text=text))

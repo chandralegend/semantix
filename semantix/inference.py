@@ -28,7 +28,7 @@ class PromptInfo:
         self.action = action
         self.tools = tools
 
-    def get_prompt(self, model: BaseLLM) -> list:
+    def get_messages(self, model: BaseLLM) -> list:
         messages = [model.system_message]
         if self.informations:
             messages.append(self.get_info_msg(self.informations, model, "informations"))
@@ -82,7 +82,16 @@ class PromptInfo:
         self, inputs: List[Information], model: BaseLLM, info_type: str
     ) -> Optional[dict]:
         contains_media = any([i.type == "Video" or i.type == "Image" for i in inputs])
-        contents = [model.get_message_desc(info_type)]
+        contents = [
+            (
+                model.get_message_desc(info_type)
+                if not contains_media
+                else {
+                    "type": "text",
+                    "text": model.get_message_desc(info_type),
+                }
+            )
+        ]
         for i in inputs:
             content = i.get_content(contains_media)
             (
@@ -103,7 +112,9 @@ class InferenceEngine:
         self.prompt_info = prompt_info
         self.model_params = model_params
 
-        ic(prompt_info.get_prompt(model))
-
     def run(self):
-        return "This is the result of the inference engine"
+        messages = self.prompt_info.get_messages(self.model)
+        messages.append(self.model.method_message(self.method))
+
+        model_output = self.model(messages, self.model_params)
+        return model_output

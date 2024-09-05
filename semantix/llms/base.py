@@ -1,132 +1,35 @@
 """Base Large Language Model (LLM) class."""
 
 import logging
-import re
-from typing import Any, Mapping, Optional
-
 from loguru import logger
-
-from semantix.types import OutputHint, ReActOutput, TypeExplanation
 
 
 httpx_logger = logging.getLogger("httpx")
 httpx_logger.setLevel(logging.WARNING)
 
-SYSTEM_PROMPT = """
-[System Prompt]
-This is an operation you must perform and return the output values. Neither, the methodology, extra sentences nor the code are not needed.
-Input/Type formatting: Explanation of the Input (variable_name) (type) = value
-"""  # noqa E501
-
-PROMPT_TEMPLATE = """
-[Information]
-{information}
-
-[Context]
-{context}
-
-[Inputs Information]
-{inputs_information}
-
-[Output Information]
-{output_information}
-
-[Type Explanations]
-{type_explanations}
-
-[Action]
-{action}
-"""  # noqa E501
-
-NORMAL_SUFFIX = """Generate and return the output result(s) only, adhering to the provided Type in the following format
+NORMAL = """
+Generate and return the output result(s) only, adhering to the provided Type in the following format
 
 [Output] <result>
 """  # noqa E501
 
-REASON_SUFFIX = """
+REASON = """
 Reason and return the output result(s) only, adhering to the provided Type in the following format
 
 [Reasoning] <Reason>
 [Output] <Result>
 """
 
-CHAIN_OF_THOUGHT_SUFFIX = """
+CHAIN_OF_THOUGHT = """
 Generate and return the output result(s) only, adhering to the provided Type in the following format. Perform the operation in a chain of thoughts.(Think Step by Step)
 
 [Chain of Thoughts] <Chain of Thoughts>
 [Output] <Result>
 """  # noqa E501
 
-REACT_SUFFIX = """
+REACT = """
 You are given with a list of tools you can use to do different things. To achieve the given [Action], incrementally think and provide tool_usage necessary to achieve what is thought.
 Provide your answer adhering in the following format. tool_usage is a function call with the necessary arguments. Only provide one [THOUGHT] and [TOOL USAGE] at a time.
-
-[Thought] <Thought>
-[Tool Usage] <tool_usage>
-"""  # noqa E501
-
-MTLLM_OUTPUT_EXTRACT_PROMPT = """
-[Output]
-{model_output}
-
-[Previous Result You Provided]
-{previous_output}
-
-[Desired Output Type]
-{output_info}
-
-[Type Explanations]
-{output_type_info}
-
-Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output.
-Important: Do not provide the code or the methodology. Only provide the output in the desired format.
-"""  # noqa E501
-
-OUTPUT_CHECK_PROMPT = """
-[Output]
-{model_output}
-
-[Desired Output Type]
-{output_type}
-
-[Type Explanations]
-{output_type_info}
-
-Check if the output is exactly in the desired Output Type. Important: Just say 'Yes' or 'No'.
-"""  # noqa E501
-
-OUTPUT_FIX_PROMPT = """
-[Previous Output]
-{model_output}
-
-[Desired Output Type]
-{output_type}
-
-[Type Explanations]
-{output_type_info}
-
-[Error]
-{error}
-
-Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output.
-Important: Do not provide the code or the methodology. Only provide the output in the desired format.
-"""  # noqa E501
-
-REACT_OUTPUT_FIX_PROMPT = """
-[Previous Output]
-{model_output}
-
-[Error]
-{error}
-
-[Tool Explanations]
-{tool_explanations}
-
-[Type Explanations]
-{type_explanations}
-
-Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output.
-Provide the output in the below format. Where tool_usage is a function call with the necessary arguments. Only provide one [THOUGHT] and [TOOL USAGE] at a time.
 
 [Thought] <Thought>
 [Tool Usage] <tool_usage>
@@ -136,7 +39,7 @@ Provide the output in the below format. Where tool_usage is a function call with
 class BaseLLM:
     """Base Large Language Model (LLM) class."""
 
-    message_desc = {
+    MESSAGE_DESCRIPTIONS = {
         "informations": "[Information]",
         "input_informations": "[Inputs Information]",
         "context": "[Context]",
@@ -145,15 +48,114 @@ class BaseLLM:
         "action": "[Action]",
         "tools": "[Tools]",
     }
-    system_prompt = "This is an operation you must perform and return the output values. Neither, the methodology, extra sentences nor the code are not needed. Input/Type formatting: Explanation of the Input (variable_name) (type) = value"
+    SYSTEM_PROMPT = "This is an operation you must perform and return the output values. Neither, the methodology, extra sentences nor the code are not needed. Input/Type formatting: Explanation of the Input (variable_name) (type) = value"
+    METHOD_PROMPTS = {
+        "Normal": NORMAL,
+        "Reason": REASON,
+        "Chain-of-Thoughts": CHAIN_OF_THOUGHT,
+        "ReAct": REACT,
+    }
+
+    def __init__(
+        self, verbose: bool = False, max_retries: int = 3, type_check: bool = False
+    ) -> None:
+        """Initialize the Large Language Model (LLM) client."""
+        self.verbose = verbose
+        self.max_retries = max_retries
+        self.type_check = type_check
 
     def get_message_desc(self, key: str) -> str:
         """Get the message description."""
-        return self.message_desc[key]
+        return self.MESSAGE_DESCRIPTIONS[key]
 
     @property
     def system_message(self) -> dict:
-        return {"role": "system", "content": self.system_prompt}
+        return {"role": "system", "content": self.SYSTEM_PROMPT}
+
+    def method_message(self, method: str) -> dict:
+        return {"role": "system", "content": self.METHOD_PROMPTS[method]}
+
+    def __infer__(self, messages: list, model_params: dict) -> str:
+        """Infer a response from the input meaning."""
+        raise NotImplementedError
+
+    @staticmethod
+    def _msgs_to_str(messages: list) -> str:
+        return "\n\n".join([str(m["content"]) for m in messages])
+
+    def __call__(self, messages: list, model_params: dict) -> str:
+        """Infer a response from the input text."""
+        if self.verbose:
+            logger.info(f"Model Input\n{self._msgs_to_str(messages)}")
+        return self.__infer__(messages, model_params)
+
+
+# MTLLM_OUTPUT_EXTRACT_PROMPT = """
+# [Output]
+# {model_output}
+
+# [Previous Result You Provided]
+# {previous_output}
+
+# [Desired Output Type]
+# {output_info}
+
+# [Type Explanations]
+# {output_type_info}
+
+# Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output.
+# Important: Do not provide the code or the methodology. Only provide the output in the desired format.
+# """  # noqa E501
+
+# OUTPUT_CHECK_PROMPT = """
+# [Output]
+# {model_output}
+
+# [Desired Output Type]
+# {output_type}
+
+# [Type Explanations]
+# {output_type_info}
+
+# Check if the output is exactly in the desired Output Type. Important: Just say 'Yes' or 'No'.
+# """  # noqa E501
+
+# OUTPUT_FIX_PROMPT = """
+# [Previous Output]
+# {model_output}
+
+# [Desired Output Type]
+# {output_type}
+
+# [Type Explanations]
+# {output_type_info}
+
+# [Error]
+# {error}
+
+# Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output.
+# Important: Do not provide the code or the methodology. Only provide the output in the desired format.
+# """  # noqa E501
+
+# REACT_OUTPUT_FIX_PROMPT = """
+# [Previous Output]
+# {model_output}
+
+# [Error]
+# {error}
+
+# [Tool Explanations]
+# {tool_explanations}
+
+# [Type Explanations]
+# {type_explanations}
+
+# Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output.
+# Provide the output in the below format. Where tool_usage is a function call with the necessary arguments. Only provide one [THOUGHT] and [TOOL USAGE] at a time.
+
+# [Thought] <Thought>
+# [Tool Usage] <tool_usage>
+# """  # noqa E501
 
 
 # class BaseLLM:
