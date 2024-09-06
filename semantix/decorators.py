@@ -1,7 +1,12 @@
 from typing import Callable, List, Union
 from semantix.types import Semantic, Tool, Information, OutputHint, TypeExplanation
-from semantix.inference import InferenceEngine, PromptInfo
-from semantix.utils import get_semstr, extract_non_primary_type
+from semantix.inference import (
+    InferenceEngine,
+    PromptInfo,
+    OutputFixPromptInfo,
+    ExtractOutputPromptInfo,
+)
+from semantix.utils import get_semstr
 import inspect
 
 
@@ -13,7 +18,11 @@ def with_llm(
     tools: List[Union[Callable, Tool]] = [],
     model_params: dict = {},
 ):
-    frame = inspect.currentframe().f_back
+    curr_frame = inspect.currentframe()
+    if curr_frame:
+        frame = curr_frame.f_back
+    else:
+        raise Exception("Cannot get the current frame.")
 
     def decorator(func):
         def wrapper(**kwargs):
@@ -45,7 +54,10 @@ def with_llm(
                 *input_informations,
                 return_hint if return_hint else [],
             ]:
-                types.update(extract_non_primary_type(i.type))
+                types.update(i.get_types())
+            type_explanations = [TypeExplanation(frame, t) for t in types]
+            for t in type_explanations:
+                types.update(t.get_nested_types())
             type_explanations = [TypeExplanation(frame, t) for t in types]
 
             inference_engine = InferenceEngine(
@@ -60,16 +72,23 @@ def with_llm(
                     return_hint=return_hint,
                     type_explanations=type_explanations,
                 ),
+                extract_output_prompt_info=ExtractOutputPromptInfo(
+                    return_hint=return_hint, type_explanations=type_explanations
+                ),
+                output_fix_prompt_info=OutputFixPromptInfo(
+                    return_hint=return_hint,
+                    type_explanations=type_explanations,
+                ),
                 model_params=model_params,
             )
-            return inference_engine.run()
+            return inference_engine.run(frame)
 
         return wrapper
 
     return decorator
 
 
-def tool(meaning: str) -> Tool:
+def tool(meaning: str) -> Callable:
     def decorator(func):
         return Tool(func, meaning)
 

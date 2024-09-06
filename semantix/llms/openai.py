@@ -6,20 +6,19 @@ class OpenAI(BaseLLM):
         self,
         verbose: bool = False,
         max_retries: int = 3,
-        type_check: bool = True,
         model: str = "gpt-4o-mini",
-        **kwargs
+        **kwargs,
     ) -> None:
         import openai
 
-        super().__init__(verbose, max_retries, type_check)
+        super().__init__(verbose, max_retries)
         self.client = openai.OpenAI()
         self.default_params = {
             "model": model,
             **kwargs,
         }
 
-    def __infer__(self, messages: list, model_params: dict) -> str:
+    def __infer__(self, messages: list, model_params: dict = {}) -> str:
         params = {
             **self.default_params,
             **model_params,

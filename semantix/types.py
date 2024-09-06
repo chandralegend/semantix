@@ -64,23 +64,26 @@ class TypeExplanation:
         """Initializes the TypeExplanation class."""
         self.type = frame.f_globals[type]
 
-    def get_type_repr(self) -> str:
+    def get_type_repr(self, type_collector: list = []) -> str:
         """Get the type representation."""
         semstr = self.type.__doc__ if self.type.__doc__ else ""
         _name = self.type.__name__
         usage_example_list = []
-        print(self.type)
         for param, annotation in self.type.__init__.__annotations__.items():
             if param == "return":
                 continue
             if isinstance(annotation, type) and issubclass(annotation, Semantic):
+                type_repr = get_type(annotation.wrapped_type)
+                type_collector.extend(extract_non_primary_type(type_repr))
                 usage_example_list.append(
-                    f'{param}="{annotation._meaning}":{get_type(annotation.wrapped_type)}'
+                    f'{param}="{annotation._meaning}":{type_repr}'
                 )
             else:
-                usage_example_list.append(f"{param}={get_type(annotation)}")
+                type_repr = get_type(annotation)
+                type_collector.extend(extract_non_primary_type(type_repr))
+                usage_example_list.append(f"{param}={type_repr}")
         usage_example = ", ".join(usage_example_list)
-        return f"{semstr} ({_name}) (class) eg:- {usage_example}".strip()
+        return f"{semstr} ({_name}) (class) eg:- {_name}({usage_example})".strip()
 
     def get_type_repr_enum(self) -> str:
         """Get the type representation."""
@@ -97,6 +100,13 @@ class TypeExplanation:
         if issubclass(self.type, Enum):
             return self.get_type_repr_enum()
         return self.get_type_repr()
+
+    def get_nested_types(self):
+        """Get the nested types."""
+        type_collector = []
+        if not issubclass(self.type, Enum):
+            self.get_type_repr(type_collector)
+        return type_collector
 
 
 class Information:
@@ -163,7 +173,9 @@ class Information:
 
     def get_types(self) -> list:
         """Get the types of the information."""
-        return extract_non_primary_type(self.type)
+        type_collector = extract_non_primary_type(self.type)
+        get_object_string(self.value, type_collector)
+        return type_collector
 
 
 class OutputHint:
@@ -180,7 +192,8 @@ class OutputHint:
 
     def get_types(self) -> list:
         """Get the types of the output."""
-        return extract_non_primary_type(self.type)
+        type_collector = extract_non_primary_type(self.type)
+        return type_collector
 
 
 class Tool:

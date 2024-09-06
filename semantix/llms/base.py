@@ -1,7 +1,12 @@
 """Base Large Language Model (LLM) class."""
 
+from typing import Any, TYPE_CHECKING
+import re
 import logging
 from loguru import logger
+
+if TYPE_CHECKING:
+    from semantix.inference import ExtractOutputPromptInfo, OutputFixPromptInfo
 
 
 httpx_logger = logging.getLogger("httpx")
@@ -55,14 +60,13 @@ class BaseLLM:
         "Chain-of-Thoughts": CHAIN_OF_THOUGHT,
         "ReAct": REACT,
     }
+    EXTRACT_OUTPUT_INSTRUCTION = "Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output. Important: Do not provide the code or the methodology. Only provide the output in the desired format."
+    OUTPUT_FIX_INSTRUCTION = "Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output. Important: Do not provide the code or the methodology. Only provide the output in the desired format."
 
-    def __init__(
-        self, verbose: bool = False, max_retries: int = 3, type_check: bool = False
-    ) -> None:
+    def __init__(self, verbose: bool = False, max_retries: int = 3) -> None:
         """Initialize the Large Language Model (LLM) client."""
         self.verbose = verbose
         self.max_retries = max_retries
-        self.type_check = type_check
 
     def get_message_desc(self, key: str) -> str:
         """Get the message description."""
@@ -88,6 +92,87 @@ class BaseLLM:
         if self.verbose:
             logger.info(f"Model Input\n{self._msgs_to_str(messages)}")
         return self.__infer__(messages, model_params)
+
+    def resolve_output(
+        self,
+        model_output: str,
+        extract_output_prompt_info: "ExtractOutputPromptInfo",
+        output_fix_prompt_info: "OutputFixPromptInfo",
+        _globals,
+        _locals,
+    ) -> Any:
+        """Resolve the output string to return the reasoning and output."""
+        if self.verbose:
+            logger.info(f"Model Output\n{model_output}")
+        output_match = re.search(r"\[Output\](.*)", model_output, re.DOTALL)
+        if not output_match:
+            output = self._extract_output(
+                model_output,
+                extract_output_prompt_info,
+            )
+        else:
+            output = output_match.group(1).strip()
+        return self.to_object(output, output_fix_prompt_info, _globals, _locals)
+
+    def _extract_output(
+        self, model_output: str, extract_output_prompt_info: "ExtractOutputPromptInfo"
+    ) -> str:
+        """Extract the output from the meaning out string."""
+        if self.verbose:
+            logger.info("Extracting output from the meaning out string.")
+        output_extract_messages = extract_output_prompt_info.get_messages(
+            self, model_output
+        )
+        output_extract_output = self.__infer__(output_extract_messages, {})
+        if self.verbose:
+            logger.info(f"Extracted Output: {output_extract_output}")
+        return output_extract_output
+
+    def to_object(
+        self,
+        output: str,
+        output_fix_prompt_info: "OutputFixPromptInfo",
+        _globals,
+        _locals,
+        error="",
+        num_retries=0,
+    ) -> Any:
+        """Convert the output string to an object."""
+        if output_fix_prompt_info.return_hint.type == "str":
+            return output
+        if num_retries >= self.max_retries:
+            raise ValueError("Failed to convert output to object. Max tries reached.")
+        if error:
+            fixed_output = self._fix_output(output, output_fix_prompt_info, error)
+            return self.to_object(
+                fixed_output,
+                output_fix_prompt_info,
+                _globals,
+                _locals,
+                error="",
+                num_retries=num_retries + 1,
+            )
+        try:
+            return eval(output, _globals, _locals)
+        except Exception as e:
+            return self.to_object(
+                output,
+                output_fix_prompt_info,
+                _globals,
+                _locals,
+                error=str(e),
+                num_retries=num_retries + 1,
+            )
+
+    def _fix_output(
+        self, output: str, output_fix_prompt_info: "OutputFixPromptInfo", error: str
+    ) -> str:
+        """Fix the output string."""
+        if self.verbose:
+            logger.info(f"Error: {error}, Fixing the output.")
+        output_fix_messages = output_fix_prompt_info.get_messages(self, output, error)
+        output_fix_output = self.__infer__(output_fix_messages, {})
+        return output_fix_output
 
 
 # MTLLM_OUTPUT_EXTRACT_PROMPT = """

@@ -1,6 +1,7 @@
 from io import BytesIO
 import base64
 import importlib
+import importlib.util
 from typing import Tuple
 
 cv2 = importlib.import_module("cv2") if importlib.util.find_spec("cv2") else None

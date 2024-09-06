@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from semantix.types import (
     Tool,
     Information,
@@ -6,7 +6,6 @@ from semantix.types import (
     TypeExplanation,
 )
 from semantix.llms.base import BaseLLM
-from icecream import ic
 
 
 class PromptInfo:
@@ -80,7 +79,7 @@ class PromptInfo:
 
     def get_info_msg(
         self, inputs: List[Information], model: BaseLLM, info_type: str
-    ) -> Optional[dict]:
+    ) -> dict:
         contains_media = any([i.type == "Video" or i.type == "Image" for i in inputs])
         contents = [
             (
@@ -101,20 +100,127 @@ class PromptInfo:
             )
         return {
             "role": "user",
-            "content": contents if contains_media else "\n".join(contents),
+            "content": contents if contains_media else "\n".join(contents),  # type: ignore
         }
 
 
+class ExtractOutputPromptInfo:
+    def __init__(
+        self, return_hint: OutputHint, type_explanations: List[TypeExplanation]
+    ):
+        self.return_hint = return_hint
+        self.type_explanations = type_explanations
+
+    def get_messages(self, model: BaseLLM, output: str) -> list:
+        messages = []
+        messages.append(
+            {
+                "role": "user",
+                "content": f"{model.get_message_desc('extract_output_output')}\n{output}",
+            }
+        )
+        messages.append(
+            {
+                "role": "user",
+                "content": f"{model.get_message_desc('extract_output_return_hint')}\n{self.return_hint}",
+            }
+        )
+        if self.type_explanations:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": "\n".join(
+                        [
+                            model.get_message_desc("extract_output_type_explanations"),
+                            *[str(t) for t in self.type_explanations],
+                        ]
+                    ),
+                }
+            )
+        messages.append(
+            {
+                "role": "user",
+                "content": model.EXTRACT_OUTPUT_INSTRUCTION,
+            }
+        )
+        return messages
+
+
+class OutputFixPromptInfo:
+    def __init__(
+        self, return_hint: OutputHint, type_explanations: List[TypeExplanation]
+    ):
+        self.return_hint = return_hint
+        self.type_explanations = type_explanations
+
+    def get_messages(self, model: BaseLLM, output: str, error: str) -> list:
+        messages = []
+        messages.append(
+            {
+                "role": "user",
+                "content": f"{model.get_message_desc('output_fix_output')}\n{output}",
+            }
+        )
+        messages.append(
+            {
+                "role": "user",
+                "content": f"{model.get_message_desc('output_fix_return_hint')}\n{self.return_hint}",
+            }
+        )
+        if self.type_explanations:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": "\n".join(
+                        [
+                            model.get_message_desc("output_fix_type_explanations"),
+                            *[str(t) for t in self.type_explanations],
+                        ]
+                    ),
+                }
+            )
+        messages.append(
+            {
+                "role": "user",
+                "content": f"{model.get_message_desc('output_fix_error')}\n{error}",
+            }
+        )
+        messages.append(
+            {
+                "role": "user",
+                "content": model.OUTPUT_FIX_INSTRUCTION,
+            }
+        )
+        return messages
+
+
 class InferenceEngine:
-    def __init__(self, model, method, prompt_info: PromptInfo, model_params: dict):
+    def __init__(
+        self,
+        model,
+        method,
+        prompt_info: PromptInfo,
+        extract_output_prompt_info: ExtractOutputPromptInfo,
+        output_fix_prompt_info: OutputFixPromptInfo,
+        model_params: dict,
+    ):
         self.model = model
         self.method = method
         self.prompt_info = prompt_info
+        self.extract_output_prompt_info = extract_output_prompt_info
+        self.output_fix_prompt_info = output_fix_prompt_info
         self.model_params = model_params
 
-    def run(self):
+    def run(self, frame):
         messages = self.prompt_info.get_messages(self.model)
         messages.append(self.model.method_message(self.method))
-
+        _locals = frame.f_locals
+        _globals = frame.f_globals
         model_output = self.model(messages, self.model_params)
-        return model_output
+        return self.model.resolve_output(
+            model_output,
+            self.extract_output_prompt_info,
+            self.output_fix_prompt_info,
+            _globals,
+            _locals,
+        )

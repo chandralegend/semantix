@@ -8,39 +8,51 @@ import ast
 
 def get_type(_type: Any) -> str:  # noqa: ANN401
     if hasattr(_type, "__origin__") and _type.__origin__ is not None:
-        if _type.__origin__ == list:
+        if _type.__origin__ is list:
             return f"list[{get_type(_type.__args__[0])}]"
-        if _type.__origin__ == dict:
+        if _type.__origin__ is dict:
             return f"dict[{get_type(_type.__args__[0])}, {get_type(_type.__args__[1])}]"
-        if _type.__origin__ == tuple:
+        if _type.__origin__ is tuple:
             return f"tuple[{', '.join([get_type(x) for x in _type.__args__])}]"
-        if _type.__origin__ == set:
+        if _type.__origin__ is set:
             return f"set[{get_type(_type.__args[0])}]"
     return str(_type.__name__) if isinstance(_type, type) else str(_type)
 
 
-def get_object_string(obj: Any) -> str:  # noqa: ANN401
+def get_object_string(obj: Any, type_collector: list = []) -> str:  # noqa: ANN401
     """Get the string representation of the input object."""
     if isinstance(obj, str):
         return f'"{obj}"'
     elif isinstance(obj, (int, float, bool)):
         return str(obj)
     elif isinstance(obj, list):
-        return "[" + ", ".join(get_object_string(item) for item in obj) + "]"
+        return (
+            "["
+            + ", ".join(get_object_string(item, type_collector) for item in obj)
+            + "]"
+        )
     elif isinstance(obj, tuple):
-        return "(" + ", ".join(get_object_string(item) for item in obj) + ")"
+        return (
+            "("
+            + ", ".join(get_object_string(item, type_collector) for item in obj)
+            + ")"
+        )
     elif isinstance(obj, dict):
         return (
             "{"
             + ", ".join(
-                f"{get_object_string(key)}: {get_object_string(value)}"
+                f"{get_object_string(key, type_collector)}: {get_object_string(value, type_collector)}"
                 for key, value in obj.items()
             )
             + "}"
         )
     elif isinstance(obj, Enum):
+        type_collector.append(obj.__class__.__name__)
+        print(obj.__class__.__name__)
         return f"{obj.__class__.__name__}.{obj.name}"
     elif hasattr(obj, "__dict__"):
+        type_collector.append(obj.__class__.__name__)
+        print(obj.__class__.__name__)
         args = ", ".join(
             f"{key}={get_object_string(value)}" for key, value in vars(obj).items()
         )

@@ -10,10 +10,10 @@ def summarize(text: Semantic[str, "Text to Summarize"]) -> Semantic[str, "Summar
 
 
 text = """
-Nuclear power is the use of nuclear reactions to produce electricity. Nuclear power can be obtained from nuclear 
+Nuclear power is the use of nuclear reactions to produce electricity. Nuclear power can be obtained from nuclear
 fission, nuclear decay and nuclear fusion reactions. Presently, the vast majority of electricity from nuclear power
 is produced by nuclear fission of uranium and plutonium in nuclear power plants. Nuclear decay processes are used
-in niche applications such as radioisotope thermoelectric generators in some space probes such as Voyager 2. 
+in niche applications such as radioisotope thermoelectric generators in some space probes such as Voyager 2.
 Generating electricity from fusion power remains the focus of international research.
 
 Most nuclear power plants use thermal reactors with enriched uranium in a once-through fuel cycle. Fuel is removed
