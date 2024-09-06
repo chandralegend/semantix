@@ -78,6 +78,8 @@ def extract_non_primary_type(type_str: str) -> list:
         "set",
         "Any",
         "None",
+        "Image",
+        "Video",
     ]
     non_primary_types = [m for t in matches for m in t if m and m not in primary_types]
     return non_primary_types

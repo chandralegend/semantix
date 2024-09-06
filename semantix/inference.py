@@ -35,6 +35,7 @@ class PromptInfo:
             messages.append(
                 self.get_info_msg(self.input_informations, model, "input_informations")
             )
+        print(messages[-1])
         if self.context:
             messages.append(
                 {
@@ -93,11 +94,10 @@ class PromptInfo:
         ]
         for i in inputs:
             content = i.get_content(contains_media)
-            (
-                content.extend(content)
-                if isinstance(content, list)
-                else contents.append(content)
-            )
+            if isinstance(content, list):
+                contents.extend(content)
+            else:
+                contents.append(content)
         return {
             "role": "user",
             "content": contents if contains_media else "\n".join(contents),  # type: ignore
