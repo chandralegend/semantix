@@ -48,11 +48,9 @@ def get_object_string(obj: Any, type_collector: list = []) -> str:  # noqa: ANN4
         )
     elif isinstance(obj, Enum):
         type_collector.append(obj.__class__.__name__)
-        print(obj.__class__.__name__)
         return f"{obj.__class__.__name__}.{obj.name}"
     elif hasattr(obj, "__dict__"):
         type_collector.append(obj.__class__.__name__)
-        print(obj.__class__.__name__)
         args = ", ".join(
             f"{key}={get_object_string(value)}" for key, value in vars(obj).items()
         )

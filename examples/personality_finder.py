@@ -31,7 +31,7 @@ class Person:
 
 @with_llm("Get Person Information use common knowledge", llm)
 def get_person_info(
-    name: Semantic[str, "Name of the Person"], # type: ignore
+    name: Semantic[str, "Name of the Person"],  # type: ignore
 ) -> Semantic[Person, "Person"]:  # type: ignore
     ...
 

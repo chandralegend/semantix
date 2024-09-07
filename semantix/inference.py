@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 from semantix.types import (
     Tool,
     Information,
@@ -35,7 +35,6 @@ class PromptInfo:
             messages.append(
                 self.get_info_msg(self.input_informations, model, "input_informations")
             )
-        print(messages[-1])
         if self.context:
             messages.append(
                 {
@@ -197,13 +196,13 @@ class OutputFixPromptInfo:
 class InferenceEngine:
     def __init__(
         self,
-        model,
-        method,
+        model: BaseLLM,
+        method: str,
         prompt_info: PromptInfo,
         extract_output_prompt_info: ExtractOutputPromptInfo,
         output_fix_prompt_info: OutputFixPromptInfo,
         model_params: dict,
-    ):
+    ) -> None:
         self.model = model
         self.method = method
         self.prompt_info = prompt_info
@@ -211,7 +210,7 @@ class InferenceEngine:
         self.output_fix_prompt_info = output_fix_prompt_info
         self.model_params = model_params
 
-    def run(self, frame):
+    def run(self, frame) -> Any:
         messages = self.prompt_info.get_messages(self.model)
         messages.append(self.model.method_message(self.method))
         _locals = frame.f_locals
