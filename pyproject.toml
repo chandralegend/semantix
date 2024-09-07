@@ -1,15 +1,22 @@
 [tool.poetry]
 name = "semantix"
 version = "0.1.0"
-description = ""
-authors = ["chandralegend"]
+description = "Give Superpowers to your python function. GenAI Application development made easy."
+authors = ["Chandra Irugalbandara <irugalbandara@ascii.ai>"]
+maintainers = ["Chandra Irugalbandara <irugalbandara@ascii.ai>"]
 license = "MIT"
 readme = "README.md"
+keywords = ["no-prompt", "llm", "meaning-typed", "autoprompt"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 loguru = "^0.7.2"
+openai = { version = "^1.44.0", optional = true }
 
+[tool.poetry.extras]
+openai = ["openai"]
+video = ["opencv-python-headless"]
+image = ["pillow"]
 
 [build-system]
 requires = ["poetry-core"]
