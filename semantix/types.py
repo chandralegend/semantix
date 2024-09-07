@@ -1,13 +1,16 @@
-from typing import Generic, TypeVar, Type, Any, Callable, Dict, List, Union
-import sys
+"""This module contains the classes and functions to represent the types and information needed for the library."""
+
 import inspect
+import sys
 from enum import Enum
+from types import FrameType
+from typing import Any, Callable, Dict, Generic, List, Type, TypeVar, Union
 
 from semantix.utils import (
     extract_non_primary_type,
     get_object_string,
-    get_type_from_value,
     get_type,
+    get_type_from_value,
 )
 
 
@@ -15,18 +18,29 @@ T = TypeVar("T")
 
 
 class SemanticMeta(type):
-    def __new__(mcs, name, bases, namespace, **kwargs):
+    """Metaclass for the Semantic class."""
+
+    def __new__(
+        mcs, name: str, bases: tuple, namespace: dict, **kwargs: dict  # noqa: N804
+    ) -> Any:  # noqa: ANN401
+        """Creates a new instance of the class."""
         cls = super().__new__(mcs, name, bases, namespace)
-        if "meaning" in kwargs:
-            cls._meaning = kwargs["meaning"]
+        if "meaning" in kwargs and hasattr(cls, "meaning"):
+            cls._meaning = kwargs["meaning"]  # type: ignore
         return cls
 
-    def __getitem__(cls, params):
+    def __getitem__(cls, params: tuple) -> Type[T]:
+        """Get the item from the class."""
         if not isinstance(params, tuple) or len(params) != 2:
             raise TypeError("Semantic requires two parameters: type and meaning")
         typ, meaning = params
-        frame = inspect.currentframe().f_back
+        curr_frame = inspect.currentframe()
+        if curr_frame:
+            frame = curr_frame.f_back
+        if not frame:
+            raise Exception("Cannot get the current frame.")
         var_name = list(frame.f_locals.keys())[-1]
+        # Set the meaning of the variable in the module's global scope
         if var_name:
             setattr(
                 sys.modules[frame.f_globals["__name__"]], f"{var_name}_meaning", meaning
@@ -37,30 +51,42 @@ class SemanticMeta(type):
 
 
 class Semantic(Generic[T], metaclass=SemanticMeta):
+    """Class to represent the semantic type."""
+
     wrapped_type: Type[T]
     _meaning: str = ""
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: list, **kwargs: dict) -> Any:  # noqa: ANN401
+        """Creates a new instance of the class."""
         return cls.wrapped_type(*args, **kwargs)
 
-    def __instancecheck__(cls, instance: Any) -> bool:
-        return isinstance(instance, cls.wrapped_type)
+    def __instancecheck__(self, instance: Any) -> bool:  # noqa: ANN401
+        """Check if the instance is of the class."""
+        return isinstance(instance, self.wrapped_type)
 
-    def __subclasscheck__(cls, subclass: Type) -> bool:
-        return issubclass(subclass, cls.wrapped_type)
+    def __subclasscheck__(self, subclass: Type) -> bool:
+        """Check if the subclass is of the class."""
+        return issubclass(subclass, self.wrapped_type)
 
-    def __repr__(cls) -> str:
-        return f"{cls.wrapped_type.__name__} {cls._meaning}"
+    def __repr__(self) -> str:
+        """Get the representation of the class."""
+        return f"{self.wrapped_type.__name__} {self._meaning}"
 
 
 class SemanticClass:
+    """Class to represent the semantic class."""
+
     @classmethod
-    def init(cls, *args, **kwargs):
+    def init(cls, *args: list, **kwargs: dict) -> Any:  # noqa: ANN401
+        """Initialize the class."""
+        # TODO: Implement the initialization of the class with llms
         return cls.__class__(*args, **kwargs)
 
 
 class TypeExplanation:
-    def __init__(self, frame, type: str) -> None:  # noqa: ANN401
+    """Class to represent the type explanation."""
+
+    def __init__(self, frame: FrameType, type: str) -> None:
         """Initializes the TypeExplanation class."""
         self.type = frame.f_globals[type]
 
@@ -101,9 +127,9 @@ class TypeExplanation:
             return self.get_type_repr_enum()
         return self.get_type_repr()
 
-    def get_nested_types(self):
+    def get_nested_types(self) -> list:
         """Get the nested types."""
-        type_collector = []
+        type_collector: List[str] = []
         if not issubclass(self.type, Enum):
             self.get_type_repr(type_collector)
         return type_collector
@@ -112,7 +138,7 @@ class TypeExplanation:
 class Information:
     """Class to represent the information."""
 
-    def __init__(self, semstr: str, name: str, value: Any) -> None:
+    def __init__(self, semstr: str, name: str, value: Any) -> None:  # noqa: ANN401
         """Initializes the Information class."""
         self.value = value
         self.name = name
@@ -181,7 +207,7 @@ class Information:
 class OutputHint:
     """Class to represent the output hint."""
 
-    def __init__(self, semstr: str, type: str) -> None:  # noqa: ANN401
+    def __init__(self, semstr: str, type: Type[Any]) -> None:  # noqa: ANN401
         """Initializes the OutputHint class."""
         self.semstr = semstr
         self.type = get_type(type)
@@ -206,6 +232,7 @@ class Tool:
 
     @property
     def get_params(self) -> List[Dict]:
+        """Get the parameters of the tool."""
         params = []
         for param, annotation in self.func.__annotations__.items():
             if isinstance(annotation, type) and issubclass(annotation, Semantic):
@@ -237,11 +264,11 @@ class Tool:
             if x["semstr"]
             else f'{x["name"]}={x["type"]}'
         )
-        return f"{self.func.__name__}({', '.join([get_param_str(x) for x in self.get_params if x['name'] != 'return'])})"
+        return f"{self.func.__name__}({', '.join([get_param_str(x) for x in self.get_params if x['name'] != 'return'])})"  # noqa E501
 
     def get_return_annotation(self) -> str:
         """Get the return annotation of the tool."""
-        return_annotation = self.func.__annotations__.get("return", None)
+        return_annotation = self.func.__annotations__.get("return")
         if (
             return_annotation
             and isinstance(return_annotation, type)

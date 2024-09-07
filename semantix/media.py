@@ -1,7 +1,9 @@
-from io import BytesIO
+"""Media module to process images and videos."""
+
 import base64
 import importlib
 import importlib.util
+from io import BytesIO
 from typing import Tuple
 
 cv2 = importlib.import_module("cv2") if importlib.util.find_spec("cv2") else None

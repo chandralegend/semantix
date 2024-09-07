@@ -1,12 +1,16 @@
-import re
-from enum import Enum
-from typing import Any
-import sys
-import importlib
+"""Utility functions for the semantix package."""
+
 import ast
+import importlib
+import re
+import sys
+from enum import Enum
+from types import FrameType, ModuleType
+from typing import Any, Optional
 
 
 def get_type(_type: Any) -> str:  # noqa: ANN401
+    """Get the type annotation of the input type."""
     if hasattr(_type, "__origin__") and _type.__origin__ is not None:
         if _type.__origin__ is list:
             return f"list[{get_type(_type.__args__[0])}]"
@@ -104,13 +108,19 @@ def get_type_from_value(data: Any) -> str:  # noqa: ANN401
         return str(type(data).__name__)
 
 
-def get_semstr(frame, obj, var_name="", module=""):
+def get_semstr(
+    frame: FrameType,
+    obj: Any,  # noqa: ANN401
+    var_name: str = "",
+    module: Optional[ModuleType] = None,
+) -> tuple:
+    """Get the semantic meaning of the input object."""
     var_name = (
-        next((var for var, val in frame.f_locals.items() if val is obj), None)
-        if not var_name
-        else var_name
+        var_name
+        if var_name
+        else next((var for var, val in frame.f_locals.items() if val is obj), "")
     )
-    _module = sys.modules[frame.f_globals["__name__"]] if not module else module
+    _module = module if module else sys.modules[frame.f_globals["__name__"]]
 
     if var_name:
         meaning = getattr(_module, f"{var_name}_meaning", None)
@@ -121,7 +131,12 @@ def get_semstr(frame, obj, var_name="", module=""):
             if isinstance(node, ast.ImportFrom):
                 for alias in node.names:
                     if alias.name == var_name:
-                        module = importlib.import_module(node.module)
+                        if node.module:
+                            module = importlib.import_module(node.module)
+                        else:
+                            raise Exception(
+                                "Module not found."
+                            )  # Don't know whether this will happen
                         var_name, meaning = get_semstr(frame, obj, var_name, module)
                         break
     return var_name, meaning

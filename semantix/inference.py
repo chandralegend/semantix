@@ -1,14 +1,15 @@
-from typing import List, Any
-from semantix.types import (
-    Tool,
-    Information,
-    OutputHint,
-    TypeExplanation,
-)
+"""Inference engine for running the model and generating prompts."""
+
+from types import FrameType
+from typing import List
+
 from semantix.llms.base import BaseLLM
+from semantix.types import Information, OutputHint, Tool, TypeExplanation
 
 
 class PromptInfo:
+    """Class to represent the prompt information. (According to Meaning-Typed Prompting Technique)."""
+
     def __init__(
         self,
         action: str,
@@ -18,7 +19,8 @@ class PromptInfo:
         tools: List[Tool],
         return_hint: OutputHint,
         type_explanations: List[TypeExplanation],
-    ):
+    ) -> None:
+        """Initializes the PromptInfo class."""
         self.informations = informations
         self.context = context
         self.input_informations = input_informations
@@ -28,6 +30,7 @@ class PromptInfo:
         self.tools = tools
 
     def get_messages(self, model: BaseLLM) -> list:
+        """Get the messages for the prompt."""
         messages = [model.system_message]
         if self.informations:
             messages.append(self.get_info_msg(self.informations, model, "informations"))
@@ -80,7 +83,8 @@ class PromptInfo:
     def get_info_msg(
         self, inputs: List[Information], model: BaseLLM, info_type: str
     ) -> dict:
-        contains_media = any([i.type == "Video" or i.type == "Image" for i in inputs])
+        """Get the information message."""
+        contains_media = any(i.type == "Video" or i.type == "Image" for i in inputs)
         contents = [
             (
                 model.get_message_desc(info_type)
@@ -104,13 +108,17 @@ class PromptInfo:
 
 
 class ExtractOutputPromptInfo:
+    """Class to represent the extract output prompt information."""
+
     def __init__(
         self, return_hint: OutputHint, type_explanations: List[TypeExplanation]
-    ):
+    ) -> None:
+        """Initializes the ExtractOutputPromptInfo class."""
         self.return_hint = return_hint
         self.type_explanations = type_explanations
 
     def get_messages(self, model: BaseLLM, output: str) -> list:
+        """Get the messages for the extract output prompt."""
         messages = []
         messages.append(
             {
@@ -146,13 +154,17 @@ class ExtractOutputPromptInfo:
 
 
 class OutputFixPromptInfo:
+    """Class to represent the output fix prompt information."""
+
     def __init__(
         self, return_hint: OutputHint, type_explanations: List[TypeExplanation]
-    ):
+    ) -> None:
+        """Initializes the OutputFixPromptInfo class."""
         self.return_hint = return_hint
         self.type_explanations = type_explanations
 
     def get_messages(self, model: BaseLLM, output: str, error: str) -> list:
+        """Get the messages for the output fix prompt."""
         messages = []
         messages.append(
             {
@@ -194,6 +206,8 @@ class OutputFixPromptInfo:
 
 
 class InferenceEngine:
+    """Class to represent the inference engine."""
+
     def __init__(
         self,
         model: BaseLLM,
@@ -203,6 +217,7 @@ class InferenceEngine:
         output_fix_prompt_info: OutputFixPromptInfo,
         model_params: dict,
     ) -> None:
+        """Initializes the InferenceEngine class."""
         self.model = model
         self.method = method
         self.prompt_info = prompt_info
@@ -210,7 +225,8 @@ class InferenceEngine:
         self.output_fix_prompt_info = output_fix_prompt_info
         self.model_params = model_params
 
-    def run(self, frame) -> Any:
+    def run(self, frame: FrameType) -> str:  # noqa: ANN401
+        """Run the inference engine."""
         messages = self.prompt_info.get_messages(self.model)
         messages.append(self.model.method_message(self.method))
         _locals = frame.f_locals
