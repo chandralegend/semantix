@@ -23,7 +23,7 @@ jobs:
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
           poetry publish
         continue-on-error: true
-      - run: pip install githubrelease markdown-to-json
+      - run: pip install githubrelease markdown-to-json toml
       - run: python scripts/gh_release.py
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

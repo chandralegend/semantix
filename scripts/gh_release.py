@@ -4,7 +4,7 @@ from github_release import gh_release_create
 
 import markdown_to_json
 
-import tomllib
+import toml
 
 
 def get_release_info(version: str) -> str:
@@ -23,8 +23,8 @@ def get_release_info(version: str) -> str:
     raise ValueError(f"Version {version} not found in CHANGELOG.md")
 
 
-with open("pyproject.toml", "rb") as f:
-    data = tomllib.load(f)
+with open("pyproject.toml", "r") as f:
+    data = toml.load(f)
 
 version = data["tool"]["poetry"]["version"]
 
