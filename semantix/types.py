@@ -119,7 +119,7 @@ class TypeExplanation:
         for param, _ in self.type.__members__.items():
             usage_example_list.append(f"{_name}.{param}")
         usage_example = ", ".join(usage_example_list)
-        return f"{semstr} ({_name}) (enum) eg:- {usage_example}".strip()
+        return f"{semstr} ({_name}) (Enum) usage eg:- {usage_example}".strip()
 
     def __str__(self) -> str:
         """Returns the string representation of the TypeExplanation class."""
