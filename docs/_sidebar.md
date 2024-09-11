@@ -4,7 +4,7 @@
     - [Installation](installation.md)
     - [Minimum Working Example](minimum-example.md)
 - Building Blocks
-    - [Semantic Type](semantic-type-system.md)
+    - [Semantic Type](semantic-type.md)
     - [Large Language Model](large-language-model.md)
     - [With LLM](function-enhancement.md)
     - [Tools](tools.md)
