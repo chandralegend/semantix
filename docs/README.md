@@ -1,8 +1,6 @@
 <div align="center">
   <picture>
-    <source media="(color-scheme: dark)" srcset="images/dark.png">
-    <source media="(color-scheme: light)" srcset="images/light.png">
-    <img alt="Semantix: Infusing Meaning into Code with Large Language Models" width="500px" src="https://i.ibb.co/SR2hqgh/2.png">
+    <img alt="Semantix: Infusing Meaning into Code with Large Language Models" width="500px" src="images/dark.png">
   </picture>
 
   [![PyPI version](https://img.shields.io/pypi/v/semantix.svg)](https://pypi.org/project/semantix/) [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chandralegend/semantix/blob/main/try.ipynb) ![License](https://img.shields.io/badge/License-MIT-blue.svg)

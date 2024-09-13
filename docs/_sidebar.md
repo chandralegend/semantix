@@ -6,15 +6,17 @@
 - Building Blocks
     - [Semantic Type](semantic-type.md)
     - [Large Language Model](large-language-model.md)
-    - [With LLM](function-enhancement.md)
+    - [With LLM](with-llm.md)
     - [Tools](tools.md)
     - [Methods](methods.md)
 - Guide
     - [Best Practices](best-practices.md)
     - [Community Tutorials](community-tutorials.md)
-- Advanced
-    - [MultiModal](multimodal.md)
-    - [Custom LLM](custom-llm.md)
+- API Reference
+    - [semantix](semantix.md)
+    - [llms](llms.md)
+    - [types](types.md)
+    - [utils](utils.md)
 - [Roadmap](roadmap.md)
 - [FAQ](faq.md)
 - [Contributing](contributing.md)
