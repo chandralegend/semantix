@@ -6,16 +6,62 @@
   [![PyPI version](https://img.shields.io/pypi/v/semantix.svg)](https://pypi.org/project/semantix/) [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chandralegend/semantix/blob/main/try.ipynb) ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 </div>
 
-Semantix empowers developers to infuse meaning into their code through enhanced variable typing (semantic typing). By leveraging the power of large language models (LLMs) behind the scenes, Semantix transforms ordinary functions into intelligent, context-aware operations without explicit LLM calls.
+Semantix provides a simple but powerful way to infuse meaning into functions, variables and classes to leverage the power of Large Language models to generate structured typed outputs without the need of JSON Schema or any other abstractions.
+
 
 ## Key Features:
 
-- **Semantic Type System**: Define rich, meaningful types that carry contextual information.
-- **Function Enhancement**: Automatically augment functions with LLM-powered capabilities.
-- **Implicit Intelligence**: Leverage advanced NLP and reasoning without direct API calls.
-- **Developer-Friendly**: Seamlessly integrate into existing Python codebases with minimal overhead.
+- **Semantic Type**: Add meaning to your variables. No need of additional abstractions like `InputField`, `OutputField` etc.
+- **AutoPrompting**: Semantix Generate prompts using the `Meaning Typed Prompting` Technique.
+- **Supercharged Functions**: Automatically augment functions with LLM-powered capabilities. No Function body is needed.
+- **Minimal Overhead**: Seamlessly integrate into existing Python codebases with minimal overhead.
 
-Semantix bridges the gap between traditional programming and AI-assisted development, allowing you to write more expressive, powerful code with ease.
+## Minimal Example
+
+```python
+from enum import Enum
+from dataclasses import dataclass
+
+from semantix import Semantic, with_llm
+from semantix.llms.openai import OpenAI
+from semantix.types import Image
+
+llm = OpenAI()
+
+class Personality(Enum):
+    """Personality of the Person"""
+
+    INTROVERT = "Introvert"
+    EXTROVERT = "Extrovert"
+
+@dataclass
+class Person:
+    full_name: str
+    yod: Semantic[int, "Year of Death"]
+    personality: Semantic[Personality, "Personality of the Person"]
+
+@with_llm("Get Person Informations use common knowledge")
+def get_person(name: Semantic[str, "Name of the Person"]) -> Person:
+    ...
+
+person_obj = get_person(name="Albert Einstein")
+print(f"{person_obj.full_name} is an {person_obj.personality.value} who died in {person_obj.yod}")
+# Albert Einstein is an Introvert who died in 1955
+```
+
+## Supports Vision
+
+```python
+from semantix.types import Image
+
+@with_llm("Get Person Informations use common knowledge")
+def get_person(img: Semantic[Image, "Image of the Person"]) -> Person:
+    ...
+
+person_obj = get_person(img=Image("mandela.jpg"))
+print(f"{person_obj.full_name} is an {person_obj.personality.value} who died in {person_obj.yod}")
+# Nelson Mandela is an Extrovert who died in 2013
+```
 
 ## Installation
 All you need is:
@@ -72,4 +118,4 @@ If you used Semantix in your research, please cite it as follows:
 ```
 
 ## Contributing
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for a quick guide on how to contribute to Semantix.
+Please read [CONTRIBUTING.md](docs/contributing.md) for a quick guide on how to contribute to Semantix.

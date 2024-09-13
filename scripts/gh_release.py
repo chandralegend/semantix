@@ -14,7 +14,7 @@ def get_release_info(version: str) -> str:
         """Convert list to markdown."""
         return "\n".join([f"- {item}" for item in items])
 
-    with open("CHANGELOG.md", "r") as f:
+    with open("docs/changelog.md", "r") as f:
         changelog = f.read()
         changelog_json = markdown_to_json.dictify(changelog)
         for release_str, release_info in changelog_json["RELEASES"].items():
