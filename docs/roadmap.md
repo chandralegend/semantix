@@ -5,7 +5,7 @@ Following is the roadmap for the project.
 - [ ] Documentation
     - [ ] Add API Reference
     - [ ] Add more examples
-    - [ ] Add best practices
+    - [X] Add best practices
 - [ ] Anthropic, Cohere, TogetherAI and other API integrations
 - [ ] More In-built Tools
 - [ ] ReAct: Reasoning and Action Methodology
