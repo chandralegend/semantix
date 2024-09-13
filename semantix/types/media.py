@@ -67,14 +67,14 @@ class Image:
         """Initializes the Image class."""
         assert (
             PILImage is not None
-        ), "Please install the required dependencies by running `pip install mtllm[image]`."
+        ), "Please install the required dependencies by running `pip install semantix[image]`."
         self.file_path = file_path
 
     def process(self) -> Tuple[str, str]:
         """Processes the image and returns a base64 encoded image and its format."""
         assert (
             PILImage is not None
-        ), "Please install the required dependencies by running `pip install mtllm[image]`."
+        ), "Please install the required dependencies by running `pip install semantix[image]`."
         image = PILImage.open(self.file_path)
         img_format = image.format
         with BytesIO() as buffer:

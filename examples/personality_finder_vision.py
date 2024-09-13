@@ -1,8 +1,9 @@
-from semantix import Semantic, with_llm
-from semantix.llms.openai import OpenAI
-from semantix.media import Image
 from enum import Enum
 from typing import List
+
+from semantix import Semantic, with_llm
+from semantix.llms.openai import OpenAI
+from semantix.types import Image
 
 llm = OpenAI()
 
@@ -61,5 +62,5 @@ def get_person_info(
 
 
 if __name__ == "__main__":
-    person_obj = get_person_info(img=Image("mandela.jpg"))
+    person_obj = get_person_info(img=Image("examples/mandela.jpg"))
     print(person_obj)

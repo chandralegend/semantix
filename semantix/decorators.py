@@ -10,7 +10,8 @@ from semantix.inference import (
     PromptInfo,
 )
 from semantix.llms.base import BaseLLM
-from semantix.types import Information, OutputHint, Semantic, Tool, TypeExplanation
+from semantix.types.prompt import Information, OutputHint, Tool, TypeExplanation
+from semantix.types.semantic import Semantic
 from semantix.utils import get_semstr
 
 

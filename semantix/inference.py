@@ -4,7 +4,7 @@ from types import FrameType
 from typing import List
 
 from semantix.llms.base import BaseLLM
-from semantix.types import Information, OutputHint, Tool, TypeExplanation
+from semantix.types.prompt import Information, OutputHint, Tool, TypeExplanation
 
 
 class PromptInfo:

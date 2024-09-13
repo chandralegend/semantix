@@ -6,10 +6,10 @@
   </picture>
 
   [![PyPI version](https://img.shields.io/pypi/v/semantix.svg)](https://pypi.org/project/semantix/) [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chandralegend/semantix/blob/main/try.ipynb) ![License](https://img.shields.io/badge/License-MIT-blue.svg)
+
+Semantix provides a simple but powerful way to infuse meaning into functions, variables and classes to leverage the power of Large Language models to generate structured typed outputs `without the need of JSON Schema or any other abstractions.`
+
 </div>
-
-Semantix provides a simple but powerful way to infuse meaning into functions, variables and classes to leverage the power of Large Language models to generate structured typed outputs without the need of JSON Schema or any other abstractions.
-
 
 ## Key Features:
 
