@@ -1,22 +1,31 @@
 <!-- markdownlint-disable first-line-h1 -->
 
 - Quick Start
-    - [Installation](installation.md)
-    - [Minimum Working Example](minimum-example.md)
+    - [Installation](quick-start/installation.md)
+    - [Minimum Working Example](quick-start/minimum-example.md)
 - Building Blocks
-    - [Semantic Type](semantic-type.md)
-    - [Large Language Model](large-language-model.md)
-    - [With LLM](with-llm.md)
-    - [Tools](tools.md)
-    - [Methods](methods.md)
-- Guide
-    - [Best Practices](best-practices.md)
-    - [Community Tutorials](community-tutorials.md)
+    - [Semantic Type](building-blocks/semantic-type.md)
+    - [Large Language Model](building-blocks/large-language-model.md)
+    - [With LLM](building-blocks/with-llm.md)
+    - [Tools](building-blocks/tools.md)
+    - [Methods](building-blocks/methods.md)
+- Guides
+    - [Best Practices](guides/best-practices.md)
+    - [Tutorials](guides/tutorials.md)
 - API Reference
-    - [semantix](semantix.md)
-    - [llms](llms.md)
-    - [types](types.md)
-    - [utils](utils.md)
+    - [semantix](api-ref/semantix.md)
+    - LLMs
+        - [OpenAI](api-ref/openai.md)
+        - [Anthropic](api-ref/anthropic.md)
+        - [Cohere](api-ref/cohere.md)
+        - [TogetherAI](api-ref/togetherai.md)
+    - [types](api-ref/types.md)
+    - [utils](api-ref/utils.md)
+- Community
+    - [Projects](community/projects.md)
+    - [Contributors](community/contributors.md)
+    - [Citation](community/citation.md)
+    - [Social Media](community/social-media.md)
 - [Roadmap](roadmap.md)
 - [FAQ](faq.md)
 - [Contributing](contributing.md)
