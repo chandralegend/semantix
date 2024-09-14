@@ -14,11 +14,7 @@
     - [Tutorials](guides/tutorials.md)
 - API Reference
     - [semantix](api-ref/semantix.md)
-    - LLMs
-        - [OpenAI](api-ref/openai.md)
-        - [Anthropic](api-ref/anthropic.md)
-        - [Cohere](api-ref/cohere.md)
-        - [TogetherAI](api-ref/togetherai.md)
+    - [llms](api-ref/llms.md)
     - [types](api-ref/types.md)
     - [utils](api-ref/utils.md)
 - Community

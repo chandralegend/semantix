@@ -4,10 +4,10 @@
   </picture>
 
   [![PyPI version](https://img.shields.io/pypi/v/semantix.svg)](https://pypi.org/project/semantix/) [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chandralegend/semantix/blob/main/try.ipynb) ![License](https://img.shields.io/badge/License-MIT-blue.svg)
+
+Semantix provides a simple but powerful way to infuse meaning into functions, variables and classes to leverage the power of Large Language models to generate structured typed outputs `without the need of JSON Schema or any other abstractions.`
+
 </div>
-
-Semantix provides a simple but powerful way to infuse meaning into functions, variables and classes to leverage the power of Large Language models to generate structured typed outputs without the need of JSON Schema or any other abstractions.
-
 
 ## Key Features:
 
@@ -40,7 +40,7 @@ class Person:
     yod: Semantic[int, "Year of Death"]
     personality: Semantic[Personality, "Personality of the Person"]
 
-@enhance("Get Person Informations use common knowledge")
+@enhance("Get Person Informations use common knowledge", llm)
 def get_person(name: Semantic[str, "Name of the Person"]) -> Person:
     ...
 
@@ -54,7 +54,7 @@ print(f"{person_obj.full_name} is an {person_obj.personality.value} who died in 
 ```python
 from semantix.types import Image
 
-@enhance("Get Person Informations use common knowledge")
+@enhance("Get Person Informations use common knowledge", llm)
 def get_person(img: Semantic[Image, "Image of the Person"]) -> Person:
     ...
 
