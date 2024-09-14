@@ -13,10 +13,9 @@
     - [Best Practices](guides/best-practices.md)
     - [Tutorials](guides/tutorials.md)
 - API Reference
-    - [semantix](api-ref/semantix.md)
-    - [llms](api-ref/llms.md)
-    - [types](api-ref/types.md)
-    - [utils](api-ref/utils.md)
+    - [semantix](api/semantix.md)
+    - [llms](api/llms.md)
+    - [types](api/types.md)
 - Community
     - [Projects](community/projects.md)
     - [Contributors](community/contributors.md)
