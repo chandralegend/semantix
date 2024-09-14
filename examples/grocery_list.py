@@ -1,4 +1,4 @@
-from semantix import Semantic, with_llm
+from semantix import Semantic, enhance
 from semantix.llms.openai import OpenAI
 from dataclasses import dataclass
 from enum import Enum
@@ -26,7 +26,7 @@ class Item:
     store: Semantic[Store, "Where to buy from"]  # type: ignore
 
 
-@with_llm("Create a Item List from the Call Transcript", llm, method="Reason")
+@enhance("Create a Item List from the Call Transcript", llm, method="Reason")
 def create_list(text: Semantic[str, "The text of the call"]) -> List[Item]:  # type: ignore
     ...
 

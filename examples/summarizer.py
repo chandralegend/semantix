@@ -1,10 +1,10 @@
-from semantix import Semantic, with_llm
+from semantix import Semantic, enhance
 from semantix.llms.openai import OpenAI
 
 llm = OpenAI(verbose=True)
 
 
-@with_llm("Summarize the Given Text", llm)
+@enhance("Summarize the Given Text", llm)
 def summarize(text: Semantic[str, "Text to Summarize"]) -> Semantic[str, "Summary"]:  # type: ignore
     ...
 

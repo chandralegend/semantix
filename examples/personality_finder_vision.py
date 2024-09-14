@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 
-from semantix import Semantic, with_llm
+from semantix import Semantic, enhance
 from semantix.llms.openai import OpenAI
 from semantix.types import Image
 
@@ -55,7 +55,7 @@ class Person:
         return repr_str
 
 
-@with_llm("Get Person Information use common knowledge", llm, method="Reason")
+@enhance("Get Person Information use common knowledge", llm, method="Reason")
 def get_person_info(
     img: Semantic[Image, "Image of a Person"],  # type: ignore
 ) -> Person: ...

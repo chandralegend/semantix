@@ -58,18 +58,18 @@ You can pass different parameters to the LLMs easily in the initialization of th
 llm = OpenAI(model="gpt-4o-mini", temperature=0.5)
 ```
 
-In here, the temperature parameter is set to 0.5 and is considered as the default value for the model for the rest of the sessions. This can be overridden in different usecases. for example, you can override the temperature parameter for 2 with llm function call as follows:
+In here, the temperature parameter is set to 0.5 and is considered as the default value for the model for the rest of the sessions. This can be overridden in different usecases. for example, you can override the temperature parameter for 2 enhance function call as follows:
 
 ```python
-@with_llm("Some meaning", llm, temperature=0.7)
+@enhance("Some meaning", llm, temperature=0.7)
 def some_function():
     ...
 
-@with_llm("Some other meaning", llm, temperature=0.3)
+@enhance("Some other meaning", llm, temperature=0.3)
 def some_other_function():
     ...
 
-@with_llm("Some other other meaning", llm)
+@enhance("Some other other meaning", llm)
 def some_other_other_function():
     ...
 ```

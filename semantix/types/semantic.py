@@ -72,5 +72,5 @@ class SemanticClass:
     @classmethod
     def init(cls, *args: list, **kwargs: dict) -> Any:  # noqa: ANN401
         """Initialize the class."""
-        # TODO: Implement the initialization of the class with llms
+        # TODO: Implement the initialization of the class enhances
         return cls.__class__(*args, **kwargs)

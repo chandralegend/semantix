@@ -10,21 +10,21 @@ Using Semantic Types is not a must in Semantix, but it can greatly improve the r
 For example, assume that you want to generate a Joke with a punchline. You can write the code as follows:
 
 ```python
-from semantix import Semantic, with_llm
+from semantix import Semantic, enhance
 from semantix.llms import OpenAI
 from typing import Tuple
 
-@with_llm(llm=OpenAI())
+@enhance(llm=OpenAI())
 def generate_joke() -> Semantic[Tuple[str, str], "Joke and Punchline"]:
     ...
 ```
 
-As you can see, i have left the `meaning` parameter of the `with_llm` empty. This is because the function name provides enough context about the task. However, in the case of the output type, i have used a Semantic Type to provide more context to the LLM. because if I just provide `Tuple[str, str]` the LLM will not know the order the Joker and the Punchline should be in the output.
+As you can see, i have left the `meaning` parameter of the `enhance` empty. This is because the function name provides enough context about the task. However, in the case of the output type, i have used a Semantic Type to provide more context to the LLM. because if I just provide `Tuple[str, str]` the LLM will not know the order the Joker and the Punchline should be in the output.
 
 If you have a function that is not self explanatory, you can use the `meaning` parameter to provide more context to the LLM. For example:
 
 ```python
-@with_llm("Generate a joke with a punchline", llm=OpenAI())
+@enhance("Generate a joke with a punchline", llm=OpenAI())
 def generate() -> Semantic[Tuple[str, str], "Joke and Punchline"]:
     ...
 ```
@@ -34,7 +34,7 @@ Same goes for the function signatures. If the function signature is not self exp
 ```python
 from semantix.types import Image
 
-@with_llm("Asnwer the given question about the image", llm=OpenAI())
+@enhance("Asnwer the given question about the image", llm=OpenAI())
 def answer_question(image: Image, q: Semantic[str, "Question"]) -> str:
     ...
 ```

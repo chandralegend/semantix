@@ -13,7 +13,7 @@ Semantix provides a simple but powerful way to infuse meaning into functions, va
 
 - **Semantic Type**: Add meaning to your variables. No need of additional abstractions like `InputField`, `OutputField` etc.
 - **AutoPrompting**: Semantix Generate prompts using the `Meaning Typed Prompting` Technique.
-- **Supercharged Functions**: Automatically augment functions with LLM-powered capabilities. No Function body is needed.
+- **Supercharged Functions**: Automatically augment functions enhance-powered capabilities. No Function body is needed.
 - **Minimal Overhead**: Seamlessly integrate into existing Python codebases with minimal overhead.
 
 ## Minimal Example
@@ -22,7 +22,7 @@ Semantix provides a simple but powerful way to infuse meaning into functions, va
 from enum import Enum
 from dataclasses import dataclass
 
-from semantix import Semantic, with_llm
+from semantix import Semantic, enhance
 from semantix.llms.openai import OpenAI
 from semantix.types import Image
 
@@ -40,7 +40,7 @@ class Person:
     yod: Semantic[int, "Year of Death"]
     personality: Semantic[Personality, "Personality of the Person"]
 
-@with_llm("Get Person Informations use common knowledge")
+@enhance("Get Person Informations use common knowledge")
 def get_person(name: Semantic[str, "Name of the Person"]) -> Person:
     ...
 
@@ -54,7 +54,7 @@ print(f"{person_obj.full_name} is an {person_obj.personality.value} who died in 
 ```python
 from semantix.types import Image
 
-@with_llm("Get Person Informations use common knowledge")
+@enhance("Get Person Informations use common knowledge")
 def get_person(img: Semantic[Image, "Image of the Person"]) -> Person:
     ...
 

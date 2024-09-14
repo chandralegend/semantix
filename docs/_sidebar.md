@@ -6,7 +6,7 @@
 - Building Blocks
     - [Semantic Type](building-blocks/semantic-type.md)
     - [Large Language Model](building-blocks/large-language-model.md)
-    - [With LLM](building-blocks/with-llm.md)
+    - [enhance](building-blocks/with-llm.md)
     - [Tools](building-blocks/tools.md)
     - [Methods](building-blocks/methods.md)
 - Guides

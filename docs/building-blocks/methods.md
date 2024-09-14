@@ -1,6 +1,6 @@
 # Methods
 
-Methods in semantix are different instructons that you can use in `with_llm` to get most out of the models. Currently we support the following methods:
+Methods in semantix are different instructons that you can use in `enhance` to get most out of the models. Currently we support the following methods:
 
 ## Normal
 
@@ -8,7 +8,7 @@ This is the default method that is used when no method is specified. In this met
 This is suitable for simple taks such as translation, summarization, etc.
 
 ```python
-@with_llm("Translate the given sentence to Arabic", llm=OpenAI(), method="Normal")
+@enhance("Translate the given sentence to Arabic", llm=OpenAI(), method="Normal")
 def translate_to_arabic(sentence: str) -> Semantic[str, "Arabic Sentence"]:
     ...
 ```
@@ -18,7 +18,7 @@ def translate_to_arabic(sentence: str) -> Semantic[str, "Arabic Sentence"]:
 This method is used when you want the model to reason about the input and generate the output. This is suitable for tasks that require reasoning such as question answering, etc. but if the task is very hard, this method will not work as expected.
 
 ```python
-@with_llm("Answer the given question", llm=OpenAI(), method="Reason")
+@enhance("Answer the given question", llm=OpenAI(), method="Reason")
 def answer_question(question: str) -> str:
     ...
 ```
@@ -28,17 +28,17 @@ def answer_question(question: str) -> str:
 This method generates the output after a series of thinking steps. This is suitable for tasks that require multiple steps of thinking such as math problems, etc.
 
 ```python
-@with_llm("Solve the given math problem", llm=OpenAI(), method="Chain-of-Thoughts")
+@enhance("Solve the given math problem", llm=OpenAI(), method="Chain-of-Thoughts")
 def solve_math_problem(problem: str) -> Semantic[str, "Solution"]:
     ...
 ```
 
 ## ReAct
 
-This method is a iterative method. In order to use this, you need to provide the `with_llm` decorator with a list of tools that you want the llm to use in the thinking process. LLM are notorious for failing in tasks such as calculations, by this method you can provide amath tool such that llm can deligate the task to the tool and get the output and continue the thinking process. Also this method is useful when you want the llm to acquire additional context from the internet or other sources.
+This method is a iterative method. In order to use this, you need to provide the `enhance` decorator with a list of tools that you want the llm to use in the thinking process. LLM are notorious for failing in tasks such as calculations, by this method you can provide amath tool such that llm can deligate the task to the tool and get the output and continue the thinking process. Also this method is useful when you want the llm to acquire additional context from the internet or other sources.
 
 ```python
-@with_llm("Answer the given question", llm=OpenAI(), method="ReAct", tools=[google_search, wikipedia_summary])
+@enhance("Answer the given question", llm=OpenAI(), method="ReAct", tools=[google_search, wikipedia_summary])
 def answer_question(question: str) -> str:
     ...
 
@@ -52,7 +52,7 @@ This will first use the google search tool to get the name of the current presid
 This method is used when you want the model to reflect on the output and correct it if necessary. This is suitable for tasks that require reflection such as writing, etc.
 
 ```python
-@with_llm("Write a short story", llm=OpenAI(), method="Reflection")
+@enhance("Write a short story", llm=OpenAI(), method="Reflection")
 def write_short_story() -> str:
     """Make sure the story is less than 3 sentences"""
     ...

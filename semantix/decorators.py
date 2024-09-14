@@ -15,7 +15,7 @@ from semantix.types.semantic import Semantic
 from semantix.utils import get_semstr
 
 
-def with_llm(
+def enhance(
     meaning: str,
     model: BaseLLM,
     info: list = [],
@@ -23,7 +23,7 @@ def with_llm(
     tools: List[Union[Callable, Tool]] = [],
     model_params: dict = {},
 ) -> Callable:
-    """Converts a function into a semantic function with LLM capabilities."""
+    """Converts a function into a semantic function enhance capabilities."""
     curr_frame = inspect.currentframe()
     if curr_frame:
         frame = curr_frame.f_back

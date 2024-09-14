@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from semantix import Semantic, with_llm
+from semantix import Semantic, enhance
 from semantix.llms.openai import OpenAI
 
 llm = OpenAI()
@@ -21,7 +21,7 @@ class Person:
     personality: Semantic[Personality, "Personality of the Person"]  # type: ignore
 
 
-@with_llm("Get Person Information use common knowledge", llm)
+@enhance("Get Person Information use common knowledge", llm)
 def get_person_info(name: Semantic[str, "Name of the Person"]) -> Person:  # type: ignore
     ...
 
