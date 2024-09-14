@@ -25,7 +25,7 @@ from enum import Enum
 from dataclasses import dataclass
 
 from semantix import Semantic, enhance
-from semantix.llms.openai import OpenAI
+from semantix.llms import OpenAI
 from semantix.types import Image
 
 llm = OpenAI()

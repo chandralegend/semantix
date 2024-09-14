@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import List
 
@@ -15,35 +16,24 @@ class Personality(Enum):
     EXTROVERT = "Extrovert"
 
 
+@dataclass
 class LifeWork:
     """Life Work of the Person"""
 
-    def __init__(self, work: str, year: int, description: str):
-        self.work = work
-        self.year = year
-        self.description = description
+    work: str
+    year: int
+    description: str
 
     def __repr__(self) -> str:
         return f"{self.work} ({self.year}) - {self.description}"
 
-    def __str__(self) -> str:
-        return f"{self.work} ({self.year}) - {self.description}"
 
-
+@dataclass
 class Person:
-    """Person"""
-
-    def __init__(
-        self,
-        full_name: Semantic[str, "Fullname of the Person"],  # type: ignore
-        yod: Semantic[int, "Year of Death"],  # type: ignore
-        personality: Semantic[Personality, "Personality of the Person"],  # type: ignore
-        life_works: Semantic[List[LifeWork], "Life's Works of the Person"],  # type: ignore
-    ):
-        self.full_name = full_name
-        self.yod = yod
-        self.personality = personality
-        self.life_works = life_works
+    full_name: str
+    yod: Semantic[int, "Year of Death"]
+    personality: Semantic[Personality, "Personality of the Person"]
+    life_works: Semantic[List[LifeWork], "Life's Works of the Person"]
 
     def __repr__(self) -> str:
         repr_str = (
