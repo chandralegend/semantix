@@ -40,6 +40,16 @@ You are given with a list of tools you can use to do different things. To achiev
 [Tool Usage] <tool_usage>
 """  # noqa E501
 
+REFLECTION = """
+Generate and return the output result(s) only, adhering to the provided Type in the following format. Perform the operation in a chain of thoughts.(Think Step by Step) to get the answer.
+Assuming that you are prone to making mistakes, reflect upon the steps you taken and perform the operation again in different procedure with more precision to validate the answer.
+
+[Chain of Thoughts] <Thought>
+[Answer] <Answer>
+[Reflection] <Reflection>
+[Output] <Output>
+"""  # noqa E501
+
 
 class BaseLLM:
     """Base Large Language Model (LLM) class."""
@@ -59,6 +69,7 @@ class BaseLLM:
         "Reason": REASON,
         "Chain-of-Thoughts": CHAIN_OF_THOUGHT,
         "ReAct": REACT,
+        "Reflection": REFLECTION,
     }
     EXTRACT_OUTPUT_INSTRUCTION = "Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output. Important: Do not provide the code or the methodology. Only provide the output in the desired format."  # noqa E501
     OUTPUT_FIX_INSTRUCTION = "Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output. Important: Do not provide the code or the methodology. Only provide the output in the desired format."  # noqa E501

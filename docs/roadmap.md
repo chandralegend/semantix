@@ -3,7 +3,7 @@
 Following is the roadmap for the project.
 
 - [ ] Documentation
-    - [ ] Add API Reference
+    - [X] Add API Reference
     - [ ] Add more examples
     - [X] Add best practices
 - [ ] Anthropic, Cohere, TogetherAI and other API integrations

@@ -21,7 +21,7 @@ def enhance(
     info: list = [],
     method: str = "Normal",
     tools: List[Union[Callable, Tool]] = [],
-    model_params: dict = {},
+    **kwargs: dict,
 ) -> Callable:
     """Converts a function into a semantic function enhance capabilities."""
     curr_frame = inspect.currentframe()
@@ -35,6 +35,7 @@ def enhance(
         raise Exception(
             "Cannot get the previous frame."
         )  # Don't know whether this will happen
+    model_params = kwargs
 
     def decorator(func: Callable) -> Callable:
         def wrapper(**kwargs: dict) -> Any:  # noqa

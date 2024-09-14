@@ -1,5 +1,9 @@
 # RELEASES
 
+## `0.1.2` - 2024-09-14
+- [FEATURE] Added Anthropic, Cohere Integration
+- [CHORE] Added Documentation
+
 ## `0.1.1` - 2024-09-08
 - [CHORE] Updated README.md with badges and installation instructions
 - [CHORE] Added try.ipynb to the repository
