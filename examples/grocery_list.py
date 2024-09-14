@@ -1,8 +1,9 @@
-from semantix import Semantic, enhance
-from semantix.llms.openai import OpenAI
 from dataclasses import dataclass
 from enum import Enum
 from typing import List
+
+from semantix import Semantic, enhance
+from semantix.llms import OpenAI
 
 llm = OpenAI(temperature=0.0)
 

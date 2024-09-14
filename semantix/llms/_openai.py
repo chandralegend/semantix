@@ -1,5 +1,8 @@
 """OpenAI API client for Language Learning Models (LLMs)."""
 
+import os
+from typing import Optional
+
 from semantix.llms.base import BaseLLM
 
 
@@ -11,6 +14,7 @@ class OpenAI(BaseLLM):
         verbose: bool = False,
         max_retries: int = 3,
         model: str = "gpt-4o-mini",
+        api_key: Optional[str] = None,
         **kwargs: dict,
     ) -> None:
         """Initialize the OpenAI API client.
@@ -26,7 +30,8 @@ class OpenAI(BaseLLM):
         import openai
 
         super().__init__(verbose, max_retries)
-        self.client = openai.OpenAI()
+        api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.client = openai.OpenAI(api_key=api_key)
         self.default_params = {
             "model": model,
             **kwargs,

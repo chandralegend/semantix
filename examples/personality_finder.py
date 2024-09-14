@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from semantix import Semantic, enhance
-from semantix.llms.openai import OpenAI
+from semantix.llms import OpenAI
 
 llm = OpenAI()
 

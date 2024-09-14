@@ -1,5 +1,5 @@
 from semantix import Semantic, enhance
-from semantix.llms.openai import OpenAI
+from semantix.llms import OpenAI
 
 llm = OpenAI(verbose=True)
 

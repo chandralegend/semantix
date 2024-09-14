@@ -1,0 +1,50 @@
+# LLMs API Reference
+
+This page documents the API reference for the `semantix.llms` module.
+
+## BaseLLM
+
+Base class to represent the Large Language Model. Every LLM should inherit from this class.
+
+### Parameters
+
+- `verbose` : bool, optional
+    - Whether to print the logs, input prompts, outputs. Default is `False`.
+- `max_retries` : int, optional
+    - The maximum number of retries to make if fails to achieve the objective. Default is `3`.
+
+### Example
+
+```python
+from semantix.llms import BaseLLM
+
+class MyLLM(BaseLLM):
+    def __init__(self, verbose=False, max_retries=3, **kwargs):
+        super().__init__(verbose=verbose, max_retries=max_retries)
+        # Your code here
+```
+
+## OpenAI
+
+A class to represent the OpenAI Large Language Model.
+
+### Parameters
+
+- `verbose` : bool, optional
+    - Whether to print the logs, input prompts, outputs. Default is `False`.
+- `max_retries` : int, optional
+    - The maximum number of retries to make if fails to achieve the objective. Default is `3`.
+- `model` : str, optional
+    - The model to use. Default is `"gpt-4o-mini"`. Currentyl only chat models are supported. Check the [OpenAI API](https://arc.net/l/quote/gkgqwbpgt) for more details.
+- `api_key` : str, optional
+    - The API key to use. Default is `None`. If `None`, it will look for the `OPENAI_API_KEY` environment variable.
+- `**kwargs`
+    - Any Default parameters to be used in inference. Check the [OpenAI API](https://platform.openai.com/docs/api-reference/chat) for more details.
+
+### Example
+
+```python
+from semantix.llms import OpenAI
+
+llm = OpenAI(verbose=True, max_retries=5, model="gpt-4o-mini", api_key="YOUR_API_KEY", temperature=0.5)
+```
