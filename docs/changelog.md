@@ -1,5 +1,8 @@
 # RELEASES
 
+## `0.1.3` - 2024-09-14
+- [FIX] Much better performance
+
 ## `0.1.2` - 2024-09-14
 - [FEATURE] Added Anthropic, Cohere Integration
 - [CHORE] Added Documentation
