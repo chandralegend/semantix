@@ -7,6 +7,21 @@ from semantix.llms.base import BaseLLM
 from semantix.types.prompt import Information, OutputHint, Tool, TypeExplanation
 
 
+def simplify_msgs(messages: list) -> list:
+    """Combine the messages with  content is string."""
+    new_messages = [messages[0]]
+    new_message = {"role": "user", "content": ""}
+    for i in range(1, len(messages)):
+        if isinstance(messages[i]["content"], str):
+            new_message["content"] += messages[i]["content"] + "\n"
+        else:
+            new_messages.append(new_message)
+            new_messages.append(messages[i])
+            new_message = {"role": "user", "content": ""}
+    new_messages.append(new_message)
+    return new_messages
+
+
 class PromptInfo:
     """Class to represent the prompt information. (According to Meaning-Typed Prompting Technique)."""
 
@@ -32,17 +47,38 @@ class PromptInfo:
     def get_messages(self, model: BaseLLM) -> list:
         """Get the messages for the prompt."""
         messages = [model.system_message]
-        if self.informations:
-            messages.append(self.get_info_msg(self.informations, model, "informations"))
+        messages.append(
+            {
+                "role": "user",
+                "content": f"{model.get_message_desc('action')} {self.action}",
+            }
+        )
         if self.input_informations:
             messages.append(
                 self.get_info_msg(self.input_informations, model, "input_informations")
             )
+        if self.informations:
+            messages.append(self.get_info_msg(self.informations, model, "informations"))
         if self.context:
             messages.append(
                 {
                     "role": "user",
                     "content": f"{model.get_message_desc('context')}\n{self.context}",
+                }
+            )
+        messages.append(
+            {
+                "role": "user",
+                "content": f"{model.get_message_desc('return_hint')}\n{self.return_hint}",
+            }
+        )
+        if self.tools:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": "\n".join(
+                        [model.get_message_desc("tools"), *[str(t) for t in self.tools]]
+                    ),
                 }
             )
         if self.type_explanations:
@@ -57,27 +93,7 @@ class PromptInfo:
                     ),
                 }
             )
-        messages.append(
-            {
-                "role": "user",
-                "content": f"{model.get_message_desc('return_hint')}\n{self.return_hint}",
-            }
-        )
-        messages.append(
-            {
-                "role": "user",
-                "content": f"{model.get_message_desc('action')}\n{self.action}",
-            }
-        )
-        if self.tools:
-            messages.append(
-                {
-                    "role": "user",
-                    "content": "\n".join(
-                        [model.get_message_desc("tools"), *[str(t) for t in self.tools]]
-                    ),
-                }
-            )
+        messages = simplify_msgs(messages)
         return messages
 
     def get_info_msg(
@@ -119,7 +135,7 @@ class ExtractOutputPromptInfo:
 
     def get_messages(self, model: BaseLLM, output: str) -> list:
         """Get the messages for the extract output prompt."""
-        messages = []
+        messages = [model.system_message]
         messages.append(
             {
                 "role": "user",
@@ -129,7 +145,7 @@ class ExtractOutputPromptInfo:
         messages.append(
             {
                 "role": "user",
-                "content": f"{model.get_message_desc('extract_output_return_hint')}\n{self.return_hint}",
+                "content": f"{model.get_message_desc('return_hint')}\n{self.return_hint}",
             }
         )
         if self.type_explanations:
@@ -138,7 +154,7 @@ class ExtractOutputPromptInfo:
                     "role": "user",
                     "content": "\n".join(
                         [
-                            model.get_message_desc("extract_output_type_explanations"),
+                            model.get_message_desc("type_explanations"),
                             *[str(t) for t in self.type_explanations],
                         ]
                     ),
@@ -150,6 +166,7 @@ class ExtractOutputPromptInfo:
                 "content": model.EXTRACT_OUTPUT_INSTRUCTION,
             }
         )
+        messages = simplify_msgs(messages)
         return messages
 
 
@@ -165,7 +182,7 @@ class OutputFixPromptInfo:
 
     def get_messages(self, model: BaseLLM, output: str, error: str) -> list:
         """Get the messages for the output fix prompt."""
-        messages = []
+        messages = [model.system_message]
         messages.append(
             {
                 "role": "user",
@@ -175,7 +192,7 @@ class OutputFixPromptInfo:
         messages.append(
             {
                 "role": "user",
-                "content": f"{model.get_message_desc('output_fix_return_hint')}\n{self.return_hint}",
+                "content": f"{model.get_message_desc('return_hint')}\n{self.return_hint}",
             }
         )
         if self.type_explanations:
@@ -184,7 +201,7 @@ class OutputFixPromptInfo:
                     "role": "user",
                     "content": "\n".join(
                         [
-                            model.get_message_desc("output_fix_type_explanations"),
+                            model.get_message_desc("type_explanations"),
                             *[str(t) for t in self.type_explanations],
                         ]
                     ),
@@ -202,6 +219,7 @@ class OutputFixPromptInfo:
                 "content": model.OUTPUT_FIX_INSTRUCTION,
             }
         )
+        messages = simplify_msgs(messages)
         return messages
 
 

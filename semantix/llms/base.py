@@ -14,23 +14,33 @@ httpx_logger = logging.getLogger("httpx")
 httpx_logger.setLevel(logging.WARNING)
 
 NORMAL = """
-Generate and return the output result(s) only, adhering to the provided Type in the following format
+Provide the answer in the desired output type definition. Follow the following template to provide the answer.
 
-[Output] <result>
+```output
+Only provide the output in this section in the desired output type.
+```
 """  # noqa E501
 
 REASON = """
-Reason and return the output result(s) only, adhering to the provided Type in the following format
+Provide the answer in the desired output type definition. Follow the following template to provide the answer.
 
-[Reasoning] <Reason>
-[Output] <Result>
+```reasoning
+Reason Step by Step to achieve the goal.
+```
+```output
+Only provide the output in this section in the desired output type.
+```
 """
 
 CHAIN_OF_THOUGHT = """
-Generate and return the output result(s) only, adhering to the provided Type in the following format. Perform the operation in a chain of thoughts.(Think Step by Step)
+Provide the answer in the desired output type definition. Follow the following template to provide the answer.
 
-[Chain of Thoughts] <Chain of Thoughts>
-[Output] <Result>
+```chain-of-thoughts
+Think Step by Step to achieve the goal.
+```
+```output
+Only provide the output in this section in the desired output type.
+```
 """  # noqa E501
 
 REACT = """
@@ -41,13 +51,39 @@ You are given with a list of tools you can use to do different things. To achiev
 """  # noqa E501
 
 REFLECTION = """
-Generate and return the output result(s) only, adhering to the provided Type in the following format. Perform the operation in a chain of thoughts.(Think Step by Step) to get the answer.
-Assuming that you are prone to making mistakes, reflect upon the steps you taken and perform the operation again in different procedure with more precision to validate the answer.
+Provide the answer in the desired output type definition. Follow the following template to provide the answer.
 
-[Chain of Thoughts] <Thought>
-[Answer] <Answer>
-[Reflection] <Reflection>
-[Output] <Output>
+```chain-of-thoughts
+Think Step by Step to achieve the goal.
+```
+```intermediate-output
+Only provide the output in this section in the desired output type.
+```
+```reflection
+Reflect and critique on the thought process and provided answer.
+```
+```output
+Only provide the output in this section in the desired output type.
+```
+"""  # noqa E501
+
+EXTRACT_OUTPUT_INSTRUCTION = """
+Above output is not in the desired output format. Extract the output in the desired format. Follow the following template to provide the answer.
+
+```output
+Only provide the output in this section in the desired output type.
+```
+"""  # noqa E501
+
+OUTPUT_FIX_INSTRUCTION = """
+Above output is not in the desired Output Type. Follow the following template to provide the answer.
+
+```debug
+Debug the error and fix the output.
+```
+```output
+Only provide the output in this section in the desired output type.
+```
 """  # noqa E501
 
 
@@ -55,15 +91,18 @@ class BaseLLM:
     """Base Large Language Model (LLM) class."""
 
     MESSAGE_DESCRIPTIONS = {
-        "informations": "[Information]",
-        "input_informations": "[Inputs Information]",
-        "context": "[Context]",
-        "type_explanations": "[Type Explanations]",
-        "return_hint": "[Output Information]",
-        "action": "[Action]",
-        "tools": "[Tools]",
+        "informations": "## Additional Information",
+        "input_informations": "## Inputs",
+        "context": "## Context",
+        "type_explanations": "## Type Definitions",
+        "return_hint": "## Desired Output Type Definition",
+        "action": "# **Goal**:",
+        "tools": "## Tools",
+        "output_fix_error": "## Error Encountered",
+        "output_fix_output": "## Previous Output",
+        "extract_output_output": "## Model Output",
     }
-    SYSTEM_PROMPT = "This is an operation you must perform and return the output values. Neither, the methodology, extra sentences nor the code are not needed. Input/Type formatting: Explanation of the Input (variable_name) (type) = value"  # noqa E501
+    SYSTEM_PROMPT = "You are a python developer with a lot of experience and sticks to the instructions given. You are instructed to not provide code snippets but to follow the instructions to achieve the goal in the desired output."  # noqa E501
     METHOD_PROMPTS = {
         "Normal": NORMAL,
         "Reason": REASON,
@@ -71,8 +110,8 @@ class BaseLLM:
         "ReAct": REACT,
         "Reflection": REFLECTION,
     }
-    EXTRACT_OUTPUT_INSTRUCTION = "Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output. Important: Do not provide the code or the methodology. Only provide the output in the desired format."  # noqa E501
-    OUTPUT_FIX_INSTRUCTION = "Above output is not in the desired Output Format/Type. Please provide the output in the desired type. Do not repeat the previously provided output. Important: Do not provide the code or the methodology. Only provide the output in the desired format."  # noqa E501
+    EXTRACT_OUTPUT_INSTRUCTION = EXTRACT_OUTPUT_INSTRUCTION
+    OUTPUT_FIX_INSTRUCTION = OUTPUT_FIX_INSTRUCTION
 
     def __init__(self, verbose: bool = False, max_retries: int = 3) -> None:
         """Initialize the Large Language Model (LLM) client."""
@@ -99,7 +138,21 @@ class BaseLLM:
     @staticmethod
     def _msgs_to_str(messages: list) -> str:
         """Convert the messages to a string."""
-        return "\n\n".join([str(m["content"]) for m in messages])
+        x = []
+        for m in messages:
+            if not isinstance(m["content"], list):
+                x.append(m["content"])
+            else:
+                x.append(
+                    "".join(
+                        [
+                            i["text"] if i["type"] == "text" else i["type"]
+                            for i in m["content"]
+                        ]
+                    )
+                )
+        print(x)
+        return "\n".join(x)
 
     def __call__(self, messages: list, model_params: dict) -> str:
         """Infer a response from the input text."""
@@ -118,29 +171,31 @@ class BaseLLM:
         """Resolve the output string to return the reasoning and output."""
         if self.verbose:
             logger.info(f"Model Output\n{model_output}")
-        output_match = re.search(r"\[Output\](.*)", model_output, re.DOTALL)
-        if not output_match:
+        outputs = dict(re.findall(r"```(.*?)\n(.*?)```", model_output, re.DOTALL))
+        if "output" not in outputs:
             output = self._extract_output(
                 model_output,
                 extract_output_prompt_info,
             )
         else:
-            output = output_match.group(1).strip()
-        return self.to_object(output, output_fix_prompt_info, _globals, _locals)
+            output = outputs["output"].strip()
+        obj = self.to_object(output, output_fix_prompt_info, _globals, _locals)
+        return obj
 
     def _extract_output(
         self, model_output: str, extract_output_prompt_info: "ExtractOutputPromptInfo"
     ) -> str:
-        """Extract the output from the meaning out string."""
+        """Extract the output from the model output."""
         if self.verbose:
-            logger.info("Extracting output from the meaning out string.")
+            logger.info("Extracting output from the model output.")
         output_extract_messages = extract_output_prompt_info.get_messages(
             self, model_output
         )
         output_extract_output = self.__infer__(output_extract_messages, {})
         if self.verbose:
             logger.info(f"Extracted Output: {output_extract_output}")
-        return output_extract_output
+        outputs = dict(re.findall(r"```(.*?)\n(.*?)```", model_output, re.DOTALL))
+        return outputs["output"].strip()
 
     def to_object(
         self,
@@ -154,7 +209,7 @@ class BaseLLM:
         """Convert the output string to an object."""
         if output_fix_prompt_info.return_hint.type == "str":
             return output
-        if num_retries >= self.max_retries:
+        if num_retries > self.max_retries:
             raise ValueError("Failed to convert output to object. Max tries reached.")
         if error:
             fixed_output = self._fix_output(output, output_fix_prompt_info, error)
@@ -186,4 +241,7 @@ class BaseLLM:
             logger.info(f"Error: {error}, Fixing the output.")
         output_fix_messages = output_fix_prompt_info.get_messages(self, output, error)
         output_fix_output = self.__infer__(output_fix_messages, {})
-        return output_fix_output
+        if self.verbose:
+            logger.info(f"Fixed Output: {output_fix_output}")
+        outputs = dict(re.findall(r"```(.*?)\n(.*?)```", output, re.DOTALL))
+        return outputs["output"].strip()

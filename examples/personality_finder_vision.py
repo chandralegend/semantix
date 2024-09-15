@@ -6,7 +6,7 @@ from semantix import Semantic, enhance
 from semantix.llms import OpenAI
 from semantix.types import Image
 
-llm = OpenAI()
+llm = OpenAI(verbose=True)
 
 
 class Personality(Enum):

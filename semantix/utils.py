@@ -20,6 +20,10 @@ def get_type(_type: Any) -> str:  # noqa: ANN401
             return f"tuple[{', '.join([get_type(x) for x in _type.__args__])}]"
         if _type.__origin__ is set:
             return f"set[{get_type(_type.__args[0])}]"
+    if hasattr(_type, "__args__"):
+        return " | ".join(get_type(arg) for arg in _type.__args__).replace(
+            "NoneType", "None"
+        )
     return str(_type.__name__) if isinstance(_type, type) else str(_type)
 
 

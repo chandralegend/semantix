@@ -32,14 +32,16 @@ class TypeExplanation:
                 type_repr = get_type(annotation.wrapped_type)
                 type_collector.extend(extract_non_primary_type(type_repr))
                 usage_example_list.append(
-                    f'{param}="{annotation._meaning}":{type_repr}'
+                    f'{param}: {type_repr} - {annotation._meaning}"'
                 )
             else:
                 type_repr = get_type(annotation)
                 type_collector.extend(extract_non_primary_type(type_repr))
-                usage_example_list.append(f"{param}={type_repr}")
+                usage_example_list.append(f"{param}: {type_repr}")
         usage_example = ", ".join(usage_example_list)
-        return f"{semstr} ({_name}) (class) eg:- {_name}({usage_example})".strip()
+        if semstr:
+            return f"- {semstr} ({_name}) (class) -> {_name}({usage_example})".strip()
+        return f"- {_name} (class) -> {_name}({usage_example})".strip()
 
     def get_type_repr_enum(self) -> str:
         """Get the type representation."""
@@ -49,7 +51,9 @@ class TypeExplanation:
         for param, _ in self.type.__members__.items():
             usage_example_list.append(f"{_name}.{param}")
         usage_example = ", ".join(usage_example_list)
-        return f"{semstr} ({_name}) (Enum) usage eg:- {usage_example}".strip()
+        if semstr:
+            return f"- {semstr} ({_name}) (Enum) -> {usage_example}".strip()
+        return f"- {_name} (Enum) -> {usage_example}".strip()
 
     def __str__(self) -> str:
         """Returns the string representation of the TypeExplanation class."""
@@ -87,7 +91,7 @@ class Information:
             return [
                 {
                     "type": "text",
-                    "text": f"{self.semstr if self.semstr else ''} ({self.name}) (Image) = ".strip(),
+                    "text": f"\n- {self.semstr if self.semstr else ''} ({self.name}) (Image) = ",
                 },
                 {
                     "type": "image_url",
@@ -99,7 +103,7 @@ class Information:
             return [
                 {
                     "type": "text",
-                    "text": f"{self.semstr if self.semstr else ''} ({self.name}) (Video) = ".strip(),
+                    "text": f"\n- {self.semstr if self.semstr else ''} ({self.name}) (Video) = ",
                 },
                 *(
                     {
@@ -125,7 +129,9 @@ class Information:
 
     def __str__(self) -> str:
         """Returns the string representation of the Information class."""
-        return f"{self.semstr} ({self.name}) ({self.type}) = {get_object_string(self.value)}".strip()
+        if self.semstr:
+            return f"- {self.semstr} ({self.name}) ({self.type}) = {get_object_string(self.value)}".strip()
+        return f"- {self.name} ({self.type}) = {get_object_string(self.value)}".strip()
 
     def get_types(self) -> list:
         """Get the types of the information."""
@@ -144,7 +150,9 @@ class OutputHint:
 
     def __str__(self) -> str:
         """Returns the string representation of the OutputHint class."""
-        return f"{self.semstr if self.semstr else ''} ({self.type})".strip()
+        if self.semstr:
+            return f"- {self.semstr} ({self.type})".strip()
+        return f"- {self.type}".strip()
 
     def get_types(self) -> list:
         """Get the types of the output."""
@@ -190,9 +198,9 @@ class Tool:
     def get_usage_example(self) -> str:
         """Get the usage example of the tool."""
         get_param_str = lambda x: (  # noqa E731
-            f'{x["name"]}="{x["semstr"]}":{x["type"]}'
+            f'{x["name"]}: {x["type"]} - "{x["semstr"]}"'
             if x["semstr"]
-            else f'{x["name"]}={x["type"]}'
+            else f'{x["name"]}: {x["type"]}'
         )
         return f"{self.func.__name__}({', '.join([get_param_str(x) for x in self.get_params if x['name'] != 'return'])})"  # noqa E501
 
@@ -209,13 +217,9 @@ class Tool:
 
     def __str__(self) -> str:
         """String representation of the tool."""
-        return " | ".join(
-            [
-                f"{self.semstr} ({self.func.__name__})",
-                self.get_return_annotation(),
-                f"usage eg. {self.get_usage_example()}",
-            ]
-        )
+        if self.semstr:
+            return f"- {self.semstr} ({self.func.__name__}) -> {self.get_usage_example()} {self.get_return_annotation()}".strip()  # noqa E501
+        return f"- {self.func.__name__} -> {self.get_usage_example()} {self.get_return_annotation()}".strip()
 
 
 class ReActOutput:
@@ -229,4 +233,4 @@ class ReActOutput:
 
     def __repr__(self) -> str:
         """Returns the string representation of the ReActOutput class."""
-        return f"ReActOutput(thought={self.thought}, action={self.action}, observation={self.observation})"
+        return f"\t- Thought: {self.thought}\n\t- Action: {self.action}\n\t- Observation: {self.observation})"
