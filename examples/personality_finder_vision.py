@@ -31,9 +31,9 @@ class LifeWork:
 @dataclass
 class Person:
     full_name: str
-    yod: Semantic[int, "Year of Death"]
-    personality: Semantic[Personality, "Personality of the Person"]
-    life_works: Semantic[List[LifeWork], "Life's Works of the Person"]
+    yod: Semantic[int, "Year of Death"]  # type: ignore
+    personality: Semantic[Personality, "Personality of the Person"]  # type: ignore
+    life_works: Semantic[List[LifeWork], "Life's Works of the Person"]  # type: ignore
 
     def __repr__(self) -> str:
         repr_str = (
