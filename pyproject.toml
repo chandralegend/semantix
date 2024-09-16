@@ -7,6 +7,8 @@ maintainers = ["Chandra Irugalbandara <irugalbandara@ascii.ai>"]
 license = "MIT"
 readme = "README.md"
 keywords = ["no-prompt", "llm", "meaning-typed", "autoprompt"]
+documentation = "https://chandralegend.github.io/semantix/"
+repository = "https://github.com/chandralegend/semantix"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -14,11 +16,19 @@ loguru = "^0.7.2"
 openai = { version = "^1.44.0", optional = true }
 anthropic = { version = "^0.34.2", optional = true }
 cohere = { version = "^5.9.2", optional = true }
+together = { version = "^1.2.12", optional = true }
+mistralai = { version = "^1.0.3", optional = true }
+groq = { version = "^0.11.0", optional = true }
+google-generativeai = { version = "^0.1.0rc1", optional = true }
 
 [tool.poetry.extras]
 openai = ["openai"]
 anthropic = ["anthropic"]
 cohere = ["cohere"]
+together = ["together"]
+mistral = ["mistralai"]
+groq = ["groq"]
+google = ["google-generativeai"]
 video = ["opencv-python-headless"]
 image = ["pillow"]
 
