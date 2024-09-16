@@ -1,6 +1,12 @@
 # RELEASES
 
-## `0.1.3` - 2024-09-14
+## `0.1.4` - 2024-09-17
+- [FEATURE] Added Helper Functions to create new classes and enums easily. Helpful when creating classes with large number of parameters or enums with large number of values.
+- [FEATURE] Retries are now available in the `enhance` decorator. This will allow the function to retry the LLM inference if it fails, increasing the chances of getting a correct answer.
+- [CHORE] Updated Documentation with the new features
+- [CHORE] Added more examples in the `examples` folder
+
+## `0.1.3` - 2024-09-16
 - [FIX] Much better performance
 
 ## `0.1.2` - 2024-09-14
