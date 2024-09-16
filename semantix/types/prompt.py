@@ -5,7 +5,7 @@ from types import FrameType
 from typing import Any, Callable, Dict, List, Type, Union
 
 from semantix.types.semantic import Semantic
-from semantix.utils import (
+from semantix.utils.utils import (
     extract_non_primary_type,
     get_object_string,
     get_type,

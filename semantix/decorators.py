@@ -12,7 +12,7 @@ from semantix.inference import (
 from semantix.llms.base import BaseLLM
 from semantix.types.prompt import Information, OutputHint, Tool, TypeExplanation
 from semantix.types.semantic import Semantic
-from semantix.utils import get_semstr
+from semantix.utils.utils import get_semstr
 
 
 def enhance(
@@ -21,9 +21,41 @@ def enhance(
     info: list = [],
     method: str = "Normal",
     tools: List[Union[Callable, Tool]] = [],
+    retries: int = 2,
     **kwargs: dict,
 ) -> Callable:
-    """Converts a function into a semantic function enhance capabilities."""
+    """Convert a function into a semantic function with enhanced LLM capabilities.
+
+    Args:
+        meaning (str): A description of the function's purpose or intended behavior.
+        model (BaseLLM): The Large Language Model instance to be used for enhancement.
+        info (list, optional): Additional information or context to be provided to the LLM. Defaults to [].
+        method (str, optional): The enhancement method to be applied. Defaults to "Normal". Options are: "Normal", "Reason", "Chain-of-Thoughts", "ReAct", "Reflection".
+        tools (List[Union[Callable, Tool]], optional): A list of functions or Tool objects that the LLM can use. Defaults to [].
+        retries (int, optional): The number of retry attempts for LLM operations. Defaults to 2.
+        **kwargs (dict): Additional keyword arguments to be passed to the LLM.
+
+    Returns:
+        Callable: A wrapped version of the original function with enhanced LLM capabilities.
+
+    The enhanced function will utilize the specified LLM and method to process inputs and generate outputs.
+    The 'tools' parameter allows for the integration of external functions or APIs that the LLM can call upon during execution.
+    Proper error handling and retry logic are implemented to ensure robustness.
+
+    Example:
+    ```python
+    @enhance(
+        meaning="Summarize text",
+        model=my_llm_instance,
+        method="Chain-of-Thoughts",
+        temperature=0.7
+    )
+    def summarize_text(text: str) -> str:
+        ...
+    ```
+
+    For more information on available methods and their descriptions, please refer documentation.
+    """  # noqa: E501
     curr_frame = inspect.currentframe()
     if curr_frame:
         frame = curr_frame.f_back
@@ -97,7 +129,7 @@ def enhance(
                 ),
                 model_params=model_params,
             )
-            return inference_engine.run(frame)
+            return inference_engine.run(frame, retries)
 
         return wrapper
 
@@ -105,7 +137,25 @@ def enhance(
 
 
 def tool(meaning: str) -> Callable:
-    """Converts a function into a tool."""
+    """Converts a function into a tool.
+
+    Args:
+        meaning (str): A description of the tool's purpose or intended behavior.
+
+    Returns:
+        Callable: A wrapped version of the original function as a Tool object.
+
+    The tool can be used by the LLM to perform specific tasks or operations during execution.
+
+    Example:
+    ```python
+    @tool("Summarize text")
+    def summarize_text(text: str) -> str:
+        # Implementation
+    ```
+
+    For more information on how to use tools with the LLM, please refer to the documentation.
+    """
 
     def decorator(func: Callable) -> Tool:
         return Tool(func, meaning)

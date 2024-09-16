@@ -4,7 +4,7 @@ import inspect
 import sys
 from typing import Any, Generic, Type, TypeVar
 
-from semantix.utils import get_type
+from semantix.utils.utils import get_type
 
 
 T = TypeVar("T")

@@ -243,17 +243,22 @@ class InferenceEngine:
         self.output_fix_prompt_info = output_fix_prompt_info
         self.model_params = model_params
 
-    def run(self, frame: FrameType) -> str:  # noqa: ANN401
+    def run(self, frame: FrameType, retries: int) -> str:  # noqa: ANN401
         """Run the inference engine."""
         messages = self.prompt_info.get_messages(self.model)
         messages.append(self.model.method_message(self.method))
         _locals = frame.f_locals
         _globals = frame.f_globals
-        model_output = self.model(messages, self.model_params)
-        return self.model.resolve_output(
-            model_output,
-            self.extract_output_prompt_info,
-            self.output_fix_prompt_info,
-            _globals,
-            _locals,
-        )
+        for _ in range(retries):
+            model_output = self.model(messages, self.model_params)
+            output = self.model.resolve_output(
+                model_output,
+                self.extract_output_prompt_info,
+                self.output_fix_prompt_info,
+                _globals,
+                _locals,
+            )
+            if output:
+                return output
+        else:
+            raise Exception(f"Failed to perform the operation after {retries} retries.")

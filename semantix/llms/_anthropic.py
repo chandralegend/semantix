@@ -21,7 +21,7 @@ class Anthropic(BaseLLM):
 
         Args:
             verbose (bool, optional): Whether to enable verbose mode. Defaults to False.
-            max_retries (int, optional): The maximum number of retries for API requests. Defaults to 3.
+            max_retries (int, optional): The maximum number of self healing steps allowed. Defaults to 3.
             model (str, optional): The model to use for the Anthropic API. Defaults to "claude-3.5-sonnet-20240620".
             api_key (str, optional): The API key for the Anthropic API. Defaults to None.
             **kwargs (dict): Additional keyword arguments to be passed to the Anthropic API.

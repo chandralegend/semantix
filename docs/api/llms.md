@@ -11,7 +11,7 @@ Base class to represent the Large Language Model. Every LLM should inherit from 
 - `verbose` : bool, optional
     - Whether to print the logs, input prompts, outputs. Default is `False`.
 - `max_retries` : int, optional
-    - The maximum number of retries to make if fails to achieve the objective. Default is `3`.
+    - max_retries (int, optional): The maximum number of self healing steps allowed. Defaults to 3.
 
 ### Example
 
@@ -33,7 +33,7 @@ A class to represent the OpenAI Large Language Model.
 - `verbose` : bool, optional
     - Whether to print the logs, input prompts, outputs. Default is `False`.
 - `max_retries` : int, optional
-    - The maximum number of retries to make if fails to achieve the objective. Default is `3`.
+    - max_retries (int, optional): The maximum number of self healing steps allowed. Defaults to 3.
 - `model` : str, optional
     - The model to use. Default is `"gpt-4o-mini"`. Currentyl only chat models are supported. Check the [OpenAI API](https://arc.net/l/quote/gkgqwbpgt) for more details.
 - `api_key` : str, optional
@@ -58,7 +58,7 @@ A class to represent the Anthropic Large Language Model.
 - `verbose` : bool, optional
     - Whether to print the logs, input prompts, outputs. Default is `False`.
 - `max_retries` : int, optional
-    - The maximum number of retries to make if fails to achieve the objective. Default is `3`.
+    - max_retries (int, optional): The maximum number of self healing steps allowed. Defaults to 3.
 - `model` : str, optional
     - The model to use. Default is `"claude-3-5-sonnet-20240620"`. Check the [Anthropic API](https://docs.anthropic.com/en/docs/about-claude/models) for more details.
 - `api_key` : str, optional
@@ -83,7 +83,7 @@ A class to represent the Cohere Large Language Model.
 - `verbose` : bool, optional
     - Whether to print the logs, input prompts, outputs. Default is `False`.
 - `max_retries` : int, optional
-    - The maximum number of retries to make if fails to achieve the objective. Default is `3`.
+    - max_retries (int, optional): The maximum number of self healing steps allowed. Defaults to 3.
 - `model` : str, optional
     - The model to use. Default is `"command-r-plus-08-2024"`. Check the [Cohere API](https://docs.cohere.com/docs/models) for more details.
 - `api_key` : str, optional

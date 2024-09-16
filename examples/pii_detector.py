@@ -1,53 +1,10 @@
-from typing import Any, Type, Optional, List
-from pydantic import BaseModel, create_model
-from pydantic_core import PydanticUndefined
-import dataclasses
+from typing import Optional, List
 
 from semantix import Semantic, enhance
 from semantix.llms import OpenAI
+from semantix.utils import create_class
 
 llm = OpenAI(max_tokens=2048)
-
-
-def pydantic_to_dataclass(
-    klass: Type[BaseModel],
-    classname: str = None,
-) -> Any:
-    """
-    Dataclass from Pydantic model
-
-    Transferred entities:
-        * Field names
-        * Type annotations, except of Annotated etc
-        * Default factory or default value
-
-    Validators are not transferred.
-
-    Order of fields may change due to dataclass's positional arguments.
-
-    """
-    # https://stackoverflow.com/questions/78327471/how-to-convert-pydantic-model-to-python-dataclass
-    dataclass_args = []
-    for name, info in klass.model_fields.items():
-        if info.default_factory is not None:
-            dataclass_field = dataclasses.field(
-                default_factory=info.default_factory,
-            )
-            dataclass_arg = (name, info.annotation, dataclass_field)
-        elif info.default is not PydanticUndefined:
-            dataclass_field = dataclasses.field(
-                default=info.get_default(),
-            )
-            dataclass_arg = (name, info.annotation, dataclass_field)
-        else:
-            dataclass_arg = (name, info.annotation)
-        dataclass_args.append(dataclass_arg)
-    dataclass_args.sort(key=lambda arg: len(arg) > 2)
-    return dataclasses.make_dataclass(
-        classname or f"{klass.__name__}",
-        dataclass_args,
-    )
-
 
 ner_entities = [
     "passport_number",
@@ -73,10 +30,11 @@ ner_entities = [
     "bban",
 ]
 
-NER = pydantic_to_dataclass(
-    create_model("NER", **{name: (Optional[List[str]], None) for name in ner_entities})
+NER = create_class(
+    "NER",
+    {name: (Optional[List[str]], None) for name in ner_entities},
+    "The named entities present in the text",
 )
-NER.__doc__ = "The named entities present in the text"
 
 
 @enhance("Extract named entities from the given text", llm)

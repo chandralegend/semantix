@@ -21,7 +21,7 @@ class Cohere(BaseLLM):
 
         Args:
             verbose (bool, optional): Whether to enable verbose mode. Defaults to False.
-            max_retries (int, optional): The maximum number of retries for API requests. Defaults to 3.
+            max_retries (int, optional): The maximum number of self healing steps allowed. Defaults to 3.
             model (str, optional): The model to use for the Cohere API. Defaults to "command-r-plus-08-2024".
             api_key (str, optional): The API key for the Cohere API. Defaults to None.
             **kwargs (dict): Additional keyword arguments to be passed to the Cohere API.

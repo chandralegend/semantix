@@ -40,7 +40,7 @@ class Person:
 ## enhance
 
 ```python
-@enhance(meaning: str, llm: BaseLLM, method: str = "Normal", tools: List[Callable] = [], **kwargs)
+@enhance(meaning: str, llm: BaseLLM, method: str = "Normal", tools: List[Callable] = [], retries=2, **kwargs)
 ```
 
 A decorator to enhance the function with LLM capabilities.
@@ -56,6 +56,8 @@ A decorator to enhance the function with LLM capabilities.
     - Options are `"Normal"`, `"Reason"`, `"Chain-of-Thoughts"`, `"ReAct"`, `"Reflection"`.
 - `tools` : List[Callable | Tool], optional
     - List of tools/functions to be used by the LLM. Default is `[]`.
+- `retries` : int, optional
+    - The number of retries to use. Default is `2`.
 - `**kwargs`
     - Additional keyword arguments to pass to the LLM.
     - For example, `temperature`, `max_tokens`, etc. The list of arguments depends on the LLM.
