@@ -251,14 +251,15 @@ class InferenceEngine:
         _globals = frame.f_globals
         for _ in range(retries):
             model_output = self.model(messages, self.model_params)
-            output = self.model.resolve_output(
-                model_output,
-                self.extract_output_prompt_info,
-                self.output_fix_prompt_info,
-                _globals,
-                _locals,
-            )
-            if output:
-                return output
+            try:
+                return self.model.resolve_output(
+                    model_output,
+                    self.extract_output_prompt_info,
+                    self.output_fix_prompt_info,
+                    _globals,
+                    _locals,
+                )
+            except:  # noqa: E722, B001
+                continue
         else:
             raise Exception(f"Failed to perform the operation after {retries} retries.")
