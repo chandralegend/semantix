@@ -28,7 +28,7 @@ pip install semantix[cohere]
 ```
 #### **TogetherAI**
 ```bash
-pip install semantix[togetherai]
+pip install semantix[together]
 ```
 #### **MistralAI**
 ```bash

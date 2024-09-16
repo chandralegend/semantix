@@ -1,5 +1,8 @@
 # RELEASES
 
+## `0.1.5` - 2024-09-17
+- [FEATURE] Added TogetherAI, MistralAI, Groq Integration
+
 ## `0.1.4` - 2024-09-17
 - [FEATURE] Added Helper Functions to create new classes and enums easily. Helpful when creating classes with large number of parameters or enums with large number of values.
 - [FEATURE] Retries are now available in the `enhance` decorator. This will allow the function to retry the LLM inference if it fails, increasing the chances of getting a correct answer.
