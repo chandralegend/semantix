@@ -167,7 +167,7 @@ class BaseLLM:
         output_fix_prompt_info: "OutputFixPromptInfo",
         _globals: dict,
         _locals: dict,
-    ) -> Any:  # noqa: ANN401
+    ) -> dict:
         """Resolve the output string to return the reasoning and output."""
         if self.verbose:
             logger.info(f"Model Output\n{model_output}")
@@ -180,7 +180,8 @@ class BaseLLM:
         else:
             output = outputs["output"].strip()
         obj = self.to_object(output, output_fix_prompt_info, _globals, _locals)
-        return obj
+        outputs["output"] = obj
+        return outputs
 
     def _extract_output(
         self, model_output: str, extract_output_prompt_info: "ExtractOutputPromptInfo"

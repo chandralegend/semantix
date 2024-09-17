@@ -2,11 +2,12 @@
 
 Following is the roadmap for the project.
 
-- [ ] Documentation
+- [X] Initial Documentation
     - [X] Add API Reference
-    - [ ] Add more examples
+    - [X] Add more examples
     - [X] Add best practices
-- [ ] Anthropic, Cohere, TogetherAI and other API integrations
+- [ ] Add Tests, Test Coverage
+- [X] Anthropic, Cohere, TogetherAI and other API integrations
 - [ ] More In-built Tools
 - [ ] ReAct: Reasoning and Action Methodology
 - [ ] Output Type Validation

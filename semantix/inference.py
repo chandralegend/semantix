@@ -1,10 +1,11 @@
 """Inference engine for running the model and generating prompts."""
 
 from types import FrameType
-from typing import List
+from typing import Any, List
 
 from semantix.llms.base import BaseLLM
 from semantix.types.prompt import Information, OutputHint, Tool, TypeExplanation
+from semantix.types.semantic import Output
 
 
 def simplify_msgs(messages: list) -> list:
@@ -243,7 +244,9 @@ class InferenceEngine:
         self.output_fix_prompt_info = output_fix_prompt_info
         self.model_params = model_params
 
-    def run(self, frame: FrameType, retries: int) -> str:  # noqa: ANN401
+    def run(
+        self, frame: FrameType, retries: int, return_additional_info: bool
+    ) -> Any:  # noqa: ANN401
         """Run the inference engine."""
         messages = self.prompt_info.get_messages(self.model)
         messages.append(self.model.method_message(self.method))
@@ -252,13 +255,16 @@ class InferenceEngine:
         for _ in range(retries):
             model_output = self.model(messages, self.model_params)
             try:
-                return self.model.resolve_output(
+                output = self.model.resolve_output(
                     model_output,
                     self.extract_output_prompt_info,
                     self.output_fix_prompt_info,
                     _globals,
                     _locals,
                 )
+                if return_additional_info:
+                    return Output(**output)
+                return output["output"]
             except:  # noqa: E722, B001
                 continue
         else:

@@ -22,6 +22,7 @@ def enhance(
     method: str = "Normal",
     tools: List[Union[Callable, Tool]] = [],
     retries: int = 2,
+    return_additional_info: bool = False,
     **kwargs: dict,
 ) -> Callable:
     """Convert a function into a semantic function with enhanced LLM capabilities.
@@ -33,6 +34,7 @@ def enhance(
         method (str, optional): The enhancement method to be applied. Defaults to "Normal". Options are: "Normal", "Reason", "Chain-of-Thoughts", "ReAct", "Reflection".
         tools (List[Union[Callable, Tool]], optional): A list of functions or Tool objects that the LLM can use. Defaults to [].
         retries (int, optional): The number of retry attempts for LLM operations. Defaults to 2.
+        return_output_obj (bool, optional): Whether to return the output and additional information. Defaults to False.
         **kwargs (dict): Additional keyword arguments to be passed to the LLM.
 
     Returns:
@@ -129,7 +131,7 @@ def enhance(
                 ),
                 model_params=model_params,
             )
-            return inference_engine.run(frame, retries)
+            return inference_engine.run(frame, retries + 1, return_additional_info)
 
         return wrapper
 
