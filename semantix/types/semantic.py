@@ -71,7 +71,7 @@ class Output:
 
     def __init__(self, **kwargs: dict) -> None:  # noqa: ANN401
         """Initialize the output class."""
-        self.kwargs = kwargs
+        self.kwargs = {key.replace("-", "_"): value for key, value in kwargs.items()}
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         """Get the attribute of the class."""
@@ -83,8 +83,8 @@ class Output:
 
     def __repr__(self) -> str:
         """Get the representation of the class."""
-        x = ",\n  ".join([f"{key}={value}" for key, value in self.kwargs.items()])
-        return f"Output(\n  {x}\n)"
+        x = "\n".join([f"### {key} ###\n{value}" for key, value in self.kwargs.items()])
+        return f"Output:\n{x}"
 
 
 class SemanticClass:
