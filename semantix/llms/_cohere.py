@@ -1,13 +1,24 @@
 """Cohere API client for Language Learning Models (LLMs)."""
 
 import os
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from semantix.llms.base import BaseLLM
 
 
 class Cohere(BaseLLM):
     """Cohere API client for Language Learning Models (LLMs)."""
+
+    SYSTEM_ROLE = "SYSTEM"
+    USER_ROLE = "USER"
+    ASSISTANT_ROLE = "CHATBOT"
+
+    class Message(BaseLLM.Message):
+        """Message class for the Cohere API client."""
+
+        def to_dict(self) -> dict:
+            """Convert the message to a dictionary."""
+            return {"role": self.role, "message": self.content.format}
 
     def __init__(
         self,
@@ -45,7 +56,8 @@ class Cohere(BaseLLM):
             **self.default_params,
             **model_params,
         }
-        chat_history, message = self.process_messages(messages)
+        simplified_messages = self.simplify_messages(messages)
+        chat_history, message = self.process_messages(simplified_messages)
         output = self.client.chat(
             chat_history=chat_history,
             message=message,
@@ -56,6 +68,26 @@ class Cohere(BaseLLM):
     @staticmethod
     def process_messages(messages: list) -> Tuple[list, str]:
         """Process the messages to the required format."""
-        message = messages.pop()["content"]
-        chat_history = [{"role": "USER", "message": msg["content"]} for msg in messages]
-        return chat_history, message
+        message = messages.pop()["message"]
+        return messages, message
+
+    def simplify_messages(self, messages: List[dict]) -> List[dict]:
+        """Simplify the messages."""
+        messages = super().simplify_messages(messages)
+        new_msgs: List[dict] = []
+        for msg in messages:
+            if not new_msgs:
+                new_msgs.append(msg)
+            elif isinstance(msg["message"], str):
+                last_msg = new_msgs[-1]
+                if last_msg["role"] == msg["role"] and isinstance(
+                    last_msg["message"], str
+                ):
+                    last_msg["message"] = "\n".join(
+                        [last_msg["message"], msg["message"]]
+                    )
+                else:
+                    new_msgs.append(msg)
+            else:
+                new_msgs.append(msg)
+        return new_msgs

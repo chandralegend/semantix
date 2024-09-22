@@ -1,7 +1,7 @@
 """Decorators for defining semantic types and tools."""
 
 import inspect
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, Literal, Union
 
 from semantix.inference import (
     ExtractOutputPromptInfo,
@@ -19,7 +19,7 @@ def enhance(
     meaning: str,
     model: BaseLLM,
     info: list = [],
-    method: str = "Normal",
+    method: Literal["Normal", "Reason", "CoT", "ReAct", "Reflection"] = "Normal",
     tools: List[Union[Callable, Tool]] = [],
     retries: int = 2,
     return_additional_info: bool = False,
@@ -31,7 +31,7 @@ def enhance(
         meaning (str): A description of the function's purpose or intended behavior.
         model (BaseLLM): The Large Language Model instance to be used for enhancement.
         info (list, optional): Additional information or context to be provided to the LLM. Defaults to [].
-        method (str, optional): The enhancement method to be applied. Defaults to "Normal". Options are: "Normal", "Reason", "Chain-of-Thoughts", "ReAct", "Reflection".
+        method (str, optional): The enhancement method to be applied. Defaults to "Normal". Options are: "Normal", "Reason", "CoT", "ReAct", "Reflection".
         tools (List[Union[Callable, Tool]], optional): A list of functions or Tool objects that the LLM can use. Defaults to [].
         retries (int, optional): The number of retry attempts for LLM operations. Defaults to 2.
         return_output_obj (bool, optional): Whether to return the output and additional information. Defaults to False.

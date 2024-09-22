@@ -15,13 +15,26 @@ PILImage = (
 class Video:
     """Class to represent a video."""
 
-    def __init__(self, file_path: str, seconds_per_frame: int = 2) -> None:
-        """Initializes the Video class."""
+    def __init__(
+        self, file_path: str, seconds_per_frame: int = 2, quality: str = "low"
+    ) -> None:
+        """
+        Initializes the Video class.
+
+        Args:
+            file_path (str): The path to the video file.
+            seconds_per_frame (int, optional): The number of seconds per frame. Defaults to 2.
+            quality (str, optional): The quality of the video. Defaults to "low".
+
+        Raises:
+            AssertionError: If the required dependencies are not installed.
+        """
         assert (
             cv2 is not None
         ), "Please install the required dependencies by running `pip install semantix[video]`."
         self.file_path = file_path
         self.seconds_per_frame = seconds_per_frame
+        self.quality = quality
 
     def process(
         self,
@@ -63,12 +76,22 @@ class Video:
 class Image:
     """Class to represent an image."""
 
-    def __init__(self, file_path: str) -> None:
-        """Initializes the Image class."""
+    def __init__(self, file_path: str, quality: str = "low") -> None:
+        """
+        Initializes the Image class.
+
+        Args:
+            file_path (str): The path to the image file.
+            quality (str, optional): The quality setting for the image. Defaults to "low".
+
+        Raises:
+            AssertionError: If the required dependencies are not installed.
+        """
         assert (
             PILImage is not None
         ), "Please install the required dependencies by running `pip install semantix[image]`."
         self.file_path = file_path
+        self.quality = quality
 
     def process(self) -> Tuple[str, str]:
         """Processes the image and returns a base64 encoded image and its format."""

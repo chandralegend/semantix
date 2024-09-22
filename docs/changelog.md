@@ -1,5 +1,11 @@
 # RELEASES
 
+## `0.1.6` - 2024-09-23
+- [FIX] Fixed Anthropic, Cohere Integration
+- [FIX] Fixed Self Healing Mechanism
+- [FEATURE] Support for Pydantic Base Models (Can be used in advanced validation needs)
+- [CHORE] Optimized Default Prompt Configurations
+
 ## `0.1.5` - 2024-09-17
 - [FEATURE] Added TogetherAI, MistralAI, Groq Integration
 

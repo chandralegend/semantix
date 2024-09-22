@@ -8,28 +8,24 @@ llm = OpenAI()
 
 
 class Address(BaseModel):
+    """Address Information"""
+
     street: str
     city: str
-    six_digit_postal_code: int
+    postal_code: int
     country: str
 
-    @field_validator("six_digit_postal_code")
-    def validate_six_digit_postal_code(cls, v):
+    @field_validator("postal_code")
+    def validate_postal_code(cls, v):
         if len(str(v)) != 6:
             raise ValueError("Postal code must be 6 digits.")
         return v
 
 
 @dataclass
-class Address:
-    street: str
-    city: str
-    six_digit_postal_code: int
-    country: str
-
-
-@dataclass
 class User:
+    """User Information"""
+
     name: str
     age: int
     address: Address

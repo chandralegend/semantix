@@ -7,12 +7,14 @@ llm = OpenAI()
 @enhance(
     "Count the occurrences of a letter in a given word",
     llm,
-    method="Reflection",
+    method="Reason",
     return_additional_info=True,
 )
-def count(
-    word: str, letter: str
-) -> Semantic[int, "Occurrences of a Letter in a Word"]: ...  # type: ignore
+def count(word: str, letter: str) -> int:
+    """Seperate the word into letters and go through each
+    letter to check if it is equal to the given letter"""
+    ...
 
 
-print(count(word="strawberry", letter="r"))  # 3
+answer = count(word="strawberry", letter="r")
+print(answer)

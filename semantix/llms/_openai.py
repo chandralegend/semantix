@@ -44,5 +44,6 @@ class OpenAI(BaseLLM):
             **self.default_params,
             **model_params,
         }
+        messages = self.simplify_messages(messages)
         output = self.client.chat.completions.create(messages=messages, **params)
         return output.choices[0].message.content

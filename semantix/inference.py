@@ -3,24 +3,11 @@
 from types import FrameType
 from typing import Any, List
 
+from loguru import logger
+
 from semantix.llms.base import BaseLLM
 from semantix.types.prompt import Information, OutputHint, Tool, TypeExplanation
 from semantix.types.semantic import Output
-
-
-def simplify_msgs(messages: list) -> list:
-    """Combine the messages with  content is string."""
-    new_messages = [messages[0]]
-    new_message = {"role": "user", "content": ""}
-    for i in range(1, len(messages)):
-        if isinstance(messages[i]["content"], str):
-            new_message["content"] += messages[i]["content"] + "\n"
-        else:
-            new_messages.append(new_message)
-            new_messages.append(messages[i])
-            new_message = {"role": "user", "content": ""}
-    new_messages.append(new_message)
-    return new_messages
 
 
 class PromptInfo:
@@ -45,83 +32,73 @@ class PromptInfo:
         self.action = action
         self.tools = tools
 
-    def get_messages(self, model: BaseLLM) -> list:
+    def get_messages(self, model: BaseLLM) -> List[BaseLLM.Message]:
         """Get the messages for the prompt."""
-        messages = [model.system_message]
+        messages = [model.get_system_message()]
         messages.append(
-            {
-                "role": "user",
-                "content": f"{model.get_message_desc('action')} {self.action}",
-            }
-        )
-        if self.input_informations:
-            messages.append(
-                self.get_info_msg(self.input_informations, model, "input_informations")
+            model.Message(
+                model.SYSTEM_ROLE,
+                model.Message.Content(
+                    [f"{model.get_message_desc('action')} {self.action}"]
+                ),
             )
-        if self.informations:
-            messages.append(self.get_info_msg(self.informations, model, "informations"))
+        )
         if self.context:
             messages.append(
-                {
-                    "role": "user",
-                    "content": f"{model.get_message_desc('context')}\n{self.context}",
-                }
+                model.Message(
+                    model.SYSTEM_ROLE,
+                    model.Message.Content(
+                        [self.context], model.get_message_desc("context")
+                    ),
+                )
             )
         messages.append(
-            {
-                "role": "user",
-                "content": f"{model.get_message_desc('return_hint')}\n{self.return_hint}",
-            }
+            model.Message(
+                model.SYSTEM_ROLE,
+                model.Message.Content(
+                    [str(self.return_hint)], model.get_message_desc("return_hint")
+                ),
+            )
         )
         if self.tools:
             messages.append(
-                {
-                    "role": "user",
-                    "content": "\n".join(
-                        [model.get_message_desc("tools"), *[str(t) for t in self.tools]]
+                model.Message(
+                    model.SYSTEM_ROLE,
+                    model.Message.Content(
+                        [str(t) for t in self.tools], model.get_message_desc("tools")
                     ),
-                }
+                )
             )
         if self.type_explanations:
             messages.append(
-                {
-                    "role": "user",
-                    "content": "\n".join(
-                        [
-                            model.get_message_desc("type_explanations"),
-                            *[str(t) for t in self.type_explanations],
-                        ]
+                model.Message(
+                    model.SYSTEM_ROLE,
+                    model.Message.Content(
+                        [str(t) for t in self.type_explanations],
+                        model.get_message_desc("type_explanations"),
                     ),
-                }
+                )
             )
-        messages = simplify_msgs(messages)
+        if self.input_informations:
+            messages.append(
+                model.Message(
+                    model.USER_ROLE,
+                    model.Message.Content(
+                        self.input_informations,  # type: ignore
+                        model.get_message_desc("input_informations"),
+                    ),
+                )
+            )
+        if self.informations:
+            messages.append(
+                model.Message(
+                    model.USER_ROLE,
+                    model.Message.Content(
+                        self.informations, model.get_message_desc("informations")  # type: ignore
+                    ),
+                )
+            )
         return messages
-
-    def get_info_msg(
-        self, inputs: List[Information], model: BaseLLM, info_type: str
-    ) -> dict:
-        """Get the information message."""
-        contains_media = any(i.type == "Video" or i.type == "Image" for i in inputs)
-        contents = [
-            (
-                model.get_message_desc(info_type)
-                if not contains_media
-                else {
-                    "type": "text",
-                    "text": model.get_message_desc(info_type),
-                }
-            )
-        ]
-        for i in inputs:
-            content = i.get_content(contains_media)
-            if isinstance(content, list):
-                contents.extend(content)
-            else:
-                contents.append(content)
-        return {
-            "role": "user",
-            "content": contents if contains_media else "\n".join(contents),  # type: ignore
-        }
 
 
 class ExtractOutputPromptInfo:
@@ -134,40 +111,41 @@ class ExtractOutputPromptInfo:
         self.return_hint = return_hint
         self.type_explanations = type_explanations
 
-    def get_messages(self, model: BaseLLM, output: str) -> list:
+    def get_messages(self, model: BaseLLM, output: str) -> List[BaseLLM.Message]:
         """Get the messages for the extract output prompt."""
-        messages = [model.system_message]
+        messages = [model.get_system_message("extract_output")]
         messages.append(
-            {
-                "role": "user",
-                "content": f"{model.get_message_desc('extract_output_output')}\n{output}",
-            }
-        )
-        messages.append(
-            {
-                "role": "user",
-                "content": f"{model.get_message_desc('return_hint')}\n{self.return_hint}",
-            }
+            model.Message(
+                model.SYSTEM_ROLE,
+                model.Message.Content(
+                    [str(self.return_hint)], model.get_message_desc("return_hint")
+                ),
+            )
         )
         if self.type_explanations:
             messages.append(
-                {
-                    "role": "user",
-                    "content": "\n".join(
-                        [
-                            model.get_message_desc("type_explanations"),
-                            *[str(t) for t in self.type_explanations],
-                        ]
+                model.Message(
+                    model.SYSTEM_ROLE,
+                    model.Message.Content(
+                        [str(t) for t in self.type_explanations],
+                        model.get_message_desc("type_explanations"),
                     ),
-                }
+                )
             )
         messages.append(
-            {
-                "role": "user",
-                "content": model.EXTRACT_OUTPUT_INSTRUCTION,
-            }
+            model.Message(
+                model.USER_ROLE,
+                model.Message.Content(
+                    [output], model.get_message_desc("extract_output_output")
+                ),
+            )
         )
-        messages = simplify_msgs(messages)
+        messages.append(
+            model.Message(
+                model.SYSTEM_ROLE,
+                model.Message.Content([model.EXTRACT_OUTPUT_INSTRUCTION]),
+            )
+        )
         return messages
 
 
@@ -181,46 +159,51 @@ class OutputFixPromptInfo:
         self.return_hint = return_hint
         self.type_explanations = type_explanations
 
-    def get_messages(self, model: BaseLLM, output: str, error: str) -> list:
+    def get_messages(
+        self, model: BaseLLM, output: str, error: str
+    ) -> List[BaseLLM.Message]:
         """Get the messages for the output fix prompt."""
-        messages = [model.system_message]
+        messages = [model.get_system_message("output_fix")]
         messages.append(
-            {
-                "role": "user",
-                "content": f"{model.get_message_desc('output_fix_output')}\n{output}",
-            }
-        )
-        messages.append(
-            {
-                "role": "user",
-                "content": f"{model.get_message_desc('return_hint')}\n{self.return_hint}",
-            }
+            model.Message(
+                model.SYSTEM_ROLE,
+                model.Message.Content(
+                    [str(self.return_hint)], model.get_message_desc("return_hint")
+                ),
+            )
         )
         if self.type_explanations:
             messages.append(
-                {
-                    "role": "user",
-                    "content": "\n".join(
-                        [
-                            model.get_message_desc("type_explanations"),
-                            *[str(t) for t in self.type_explanations],
-                        ]
+                model.Message(
+                    model.SYSTEM_ROLE,
+                    model.Message.Content(
+                        [str(t) for t in self.type_explanations],
+                        model.get_message_desc("type_explanations"),
                     ),
-                }
+                )
             )
         messages.append(
-            {
-                "role": "user",
-                "content": f"{model.get_message_desc('output_fix_error')}\n{error}",
-            }
+            model.Message(
+                model.USER_ROLE,
+                model.Message.Content(
+                    [output], model.get_message_desc("output_fix_output")
+                ),
+            )
         )
         messages.append(
-            {
-                "role": "user",
-                "content": model.OUTPUT_FIX_INSTRUCTION,
-            }
+            model.Message(
+                model.USER_ROLE,
+                model.Message.Content(
+                    [error], model.get_message_desc("output_fix_error")
+                ),
+            )
         )
-        messages = simplify_msgs(messages)
+        messages.append(
+            model.Message(
+                model.SYSTEM_ROLE,
+                model.Message.Content([model.OUTPUT_FIX_INSTRUCTION]),
+            )
+        )
         return messages
 
 
@@ -252,20 +235,23 @@ class InferenceEngine:
         messages.append(self.model.method_message(self.method))
         _locals = frame.f_locals
         _globals = frame.f_globals
-        for _ in range(retries):
-            model_output = self.model(messages, self.model_params)
+        for i in range(retries + 1):
+            model_output_str = self.model(messages, self.model_params)
             try:
-                output = self.model.resolve_output(
-                    model_output,
+                model_output = self.model.resolve_output(
+                    model_output_str,
                     self.extract_output_prompt_info,
                     self.output_fix_prompt_info,
                     _globals,
                     _locals,
                 )
+                output = Output(**model_output)
                 if return_additional_info:
-                    return Output(**output)
-                return output["output"]
-            except:  # noqa: E722, B001
-                continue
+                    return output
+                return output.output
+            except Exception as e:
+                if self.model.verbose and i < retries:
+                    err_msg = f"Error encountered: {e}. Retrying... ({i+1}/{retries})"
+                    logger.exception(err_msg)
         else:
             raise Exception(f"Failed to perform the operation after {retries} retries.")

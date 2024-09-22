@@ -1,10 +1,10 @@
 from typing import Optional, List
 
 from semantix import Semantic, enhance
-from semantix.llms import OpenAI
+from semantix.llms import Anthropic
 from semantix.utils import create_class
 
-llm = OpenAI(max_tokens=2048)
+llm = Anthropic()
 
 ner_entities = [
     "passport_number",
@@ -62,9 +62,5 @@ texts = [
 ]
 
 for text in texts:
-    try:
-        entities = extract_entities(text=text)
-        print(entities)
-    except Exception as e:
-        print(text, e)
-        continue
+    entities = extract_entities(text=text)
+    print(entities)

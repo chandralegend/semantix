@@ -4,7 +4,10 @@ from enum import Enum
 from types import FrameType
 from typing import Any, Callable, Dict, List, Type, Union
 
+from pydantic import BaseModel
+
 from semantix.types.semantic import Semantic
+from semantix.utils.helpers import pydantic_to_dataclass
 from semantix.utils.utils import (
     extract_non_primary_type,
     get_object_string,
@@ -22,6 +25,10 @@ class TypeExplanation:
 
     def get_type_repr(self, type_collector: list = []) -> str:
         """Get the type representation."""
+        if issubclass(self.type, BaseModel):
+            __doc__ = self.type.__doc__
+            self.type = pydantic_to_dataclass(self.type, self.type.__name__)
+            self.type.__doc__ = __doc__
         semstr = self.type.__doc__ if self.type.__doc__ else ""
         _name = self.type.__name__
         usage_example_list = []
@@ -83,49 +90,15 @@ class Information:
         """Get the type of the information."""
         return get_type_from_value(self.value)
 
-    def get_content(self, contains_media: bool) -> Union[List[Dict], str]:
+    def get_content(self, contains_media: bool) -> Union[List, str]:
         """Returns the list of dictionaries representation of the InputInformation class."""
         input_type = self.type
-        if input_type == "Image":
-            img_base64, img_type = self.value.process()
+        if input_type == "Image" or input_type == "Video":
             return [
-                {
-                    "type": "text",
-                    "text": f"\n- {self.semstr if self.semstr else ''} ({self.name}) (Image) = ",
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/{img_type};base64,{img_base64}"},
-                },
+                f"- {self.semstr if self.semstr else ''} ({self.name}) ({input_type}) = ",
+                self.value,
             ]
-        elif input_type == "Video":
-            video_frames = self.value.process()
-            return [
-                {
-                    "type": "text",
-                    "text": f"\n- {self.semstr if self.semstr else ''} ({self.name}) (Video) = ",
-                },
-                *(
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{frame}",
-                            "detail": "low",
-                        },
-                    }
-                    for frame in video_frames
-                ),
-            ]
-        return (
-            str(self)
-            if not contains_media
-            else [
-                {
-                    "type": "text",
-                    "text": str(self),
-                }
-            ]
-        )
+        return str(self) if not contains_media else [str(self)]
 
     def __str__(self) -> str:
         """Returns the string representation of the Information class."""
