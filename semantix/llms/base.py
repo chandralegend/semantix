@@ -335,7 +335,7 @@ class BaseLLM:
                 _globals,
                 _locals,
                 error="",
-                num_retries=num_retries + 1,
+                num_retries=num_retries,
             )
         try:
             return eval(output, _globals, _locals)
