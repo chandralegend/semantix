@@ -16,6 +16,7 @@
     - [semantix](api/semantix.md)
     - [llms](api/llms.md)
     - [types](api/types.md)
+    - [utils](api/utils.md)
 - Community
     - [Projects](community/projects.md)
     - [Contributors](community/contributors.md)

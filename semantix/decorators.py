@@ -34,7 +34,7 @@ def enhance(
         method (str, optional): The enhancement method to be applied. Defaults to "Normal". Options are: "Normal", "Reason", "CoT", "ReAct", "Reflection".
         tools (List[Union[Callable, Tool]], optional): A list of functions or Tool objects that the LLM can use. Defaults to [].
         retries (int, optional): The number of retry attempts for LLM operations. Defaults to 2.
-        return_output_obj (bool, optional): Whether to return the output and additional information. Defaults to False.
+        return_additional_info (bool, optional): Whether to return the output and additional information. Defaults to False.
         **kwargs (dict): Additional keyword arguments to be passed to the LLM.
 
     Returns:
@@ -49,7 +49,7 @@ def enhance(
     @enhance(
         meaning="Summarize text",
         model=my_llm_instance,
-        method="Chain-of-Thoughts",
+        method="CoT",
         temperature=0.7
     )
     def summarize_text(text: str) -> str:

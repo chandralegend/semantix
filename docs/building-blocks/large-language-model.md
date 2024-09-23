@@ -80,6 +80,8 @@ To check the supported parameters for the LLMs, you can refer to the documentati
 
 ## How to create a custom LLM?
 
+!> If your model follows a different message template, its little tricky. Check one of the in-built LLMs to understand the implementation.
+
 Each and every in-built LLM classes in Semantix are subclasses of the `BaseLLM` class. You can create your own custom LLM by subclassing the `BaseLLM` class and implementing the necessary methods.
 
 For example, to create a custom LLM that always returns a name of the model, you can do the following:
