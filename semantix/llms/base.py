@@ -304,9 +304,10 @@ class BaseLLM:
         """Extract the output from the model output."""
         if self.verbose:
             logger.info("Extracting output from the model output.")
-        output_extract_messages = extract_output_prompt_info.get_messages(
-            self, model_output
-        )
+        messages = extract_output_prompt_info.get_messages(self, model_output)
+        if self.verbose:
+            logger.info(f"Output Extraction Input\n{self._msgs_to_str(messages)}")
+        output_extract_messages = [m.to_dict() for m in messages]
         output_extract_output = self.__infer__(output_extract_messages, {})
         if self.verbose:
             logger.info(f"Extracted Output: {output_extract_output}")
@@ -360,10 +361,10 @@ class BaseLLM:
         """Fix the output string."""
         if self.verbose:
             logger.info(f"Error: {error}, Fixing the output.")
-        output_fix_messages = [
-            m.to_dict()
-            for m in output_fix_prompt_info.get_messages(self, output, error)
-        ]
+        messages = output_fix_prompt_info.get_messages(self, output, error)
+        if self.verbose:
+            logger.info(f"Debugging Input\n{self._msgs_to_str(messages)}")
+        output_fix_messages = [m.to_dict() for m in messages]
         output_fix_output = self.__infer__(output_fix_messages, {})
         if self.verbose:
             logger.info(f"Fixed Output: {output_fix_output}")
