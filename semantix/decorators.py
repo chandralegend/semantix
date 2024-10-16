@@ -73,7 +73,11 @@ def enhance(
 
     def decorator(func: Callable) -> Callable:
         def wrapper(**kwargs: dict) -> Any:  # noqa
-            informations = [Information(obj, *get_semstr(frame, obj)) for obj in info]
+            informations = []
+            for i in info:
+                var_name, meaning = get_semstr(frame, i)
+                informations.append(Information(meaning, var_name, i))
+            _tools = [tool if isinstance(tool, Tool) else Tool(tool) for tool in tools]
             _tools = [tool if isinstance(tool, Tool) else Tool(tool) for tool in tools]
             input_informations = []
             return_hint: OutputHint

@@ -1,13 +1,15 @@
 """Inference engine for running the model and generating prompts."""
 
 from types import FrameType
-from typing import Any, List
+from typing import Any, List, TYPE_CHECKING
 
 from loguru import logger
 
-from semantix.llms.base import BaseLLM
 from semantix.types.prompt import Information, OutputHint, Tool, TypeExplanation
 from semantix.types.semantic import Output
+
+if TYPE_CHECKING:
+    from semantix.llms.base import BaseLLM
 
 
 class PromptInfo:
@@ -32,9 +34,9 @@ class PromptInfo:
         self.action = action
         self.tools = tools
 
-    def get_messages(self, model: BaseLLM) -> List[BaseLLM.Message]:
+    def get_messages(self, model: "BaseLLM") -> List["BaseLLM.Message"]:
         """Get the messages for the prompt."""
-        messages = [model.get_system_message()]
+        messages = [model.get_system_message()] if model.SYSTEM_PROMPT else []
         messages.append(
             model.Message(
                 model.SYSTEM_ROLE,
@@ -111,7 +113,7 @@ class ExtractOutputPromptInfo:
         self.return_hint = return_hint
         self.type_explanations = type_explanations
 
-    def get_messages(self, model: BaseLLM, output: str) -> List[BaseLLM.Message]:
+    def get_messages(self, model: "BaseLLM", output: str) -> List["BaseLLM.Message"]:
         """Get the messages for the extract output prompt."""
         messages = [model.get_system_message("extract_output")]
         messages.append(
@@ -142,7 +144,7 @@ class ExtractOutputPromptInfo:
         )
         messages.append(
             model.Message(
-                model.SYSTEM_ROLE,
+                model.USER_ROLE,
                 model.Message.Content([model.EXTRACT_OUTPUT_INSTRUCTION]),
             )
         )
@@ -160,8 +162,8 @@ class OutputFixPromptInfo:
         self.type_explanations = type_explanations
 
     def get_messages(
-        self, model: BaseLLM, output: str, error: str
-    ) -> List[BaseLLM.Message]:
+        self, model: "BaseLLM", output: str, error: str
+    ) -> List["BaseLLM.Message"]:
         """Get the messages for the output fix prompt."""
         messages = [model.get_system_message("output_fix")]
         messages.append(
@@ -200,7 +202,7 @@ class OutputFixPromptInfo:
         )
         messages.append(
             model.Message(
-                model.SYSTEM_ROLE,
+                model.USER_ROLE,
                 model.Message.Content([model.OUTPUT_FIX_INSTRUCTION]),
             )
         )
@@ -212,7 +214,7 @@ class InferenceEngine:
 
     def __init__(
         self,
-        model: BaseLLM,
+        model: "BaseLLM",
         method: str,
         prompt_info: PromptInfo,
         extract_output_prompt_info: ExtractOutputPromptInfo,

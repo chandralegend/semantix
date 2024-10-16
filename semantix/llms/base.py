@@ -1,74 +1,112 @@
 """Base Large Language Model (LLM) class."""
 
+import inspect
 import logging
 import re
 import traceback
-from typing import Any, Dict, List, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, List, Literal, Union
 
 from loguru import logger
 
-from semantix.types import Image, Video
-from semantix.types.prompt import Information
 
-if TYPE_CHECKING:
-    from semantix.inference import ExtractOutputPromptInfo, OutputFixPromptInfo
+from semantix.inference import (
+    ExtractOutputPromptInfo,
+    InferenceEngine,
+    OutputFixPromptInfo,
+    PromptInfo,
+)
+from semantix.types import Image, Video
+from semantix.types.prompt import Information, OutputHint, Tool, TypeExplanation
+from semantix.types.semantic import Semantic
+from semantix.utils.utils import get_semstr
 
 
 httpx_logger = logging.getLogger("httpx")
 httpx_logger.setLevel(logging.WARNING)
 
 NORMAL = """
-Provide the answer in the desired output type definition. Follow the following template to provide the answer.
+Follow the following template to provide the answer.
 
 ```output
-Only provide the output in this section in the desired output type.
+Provide the output in the desired output type.
 ```
-"""  # noqa E501
+"""
 
 REASON = """
-Provide the answer in the desired output type definition. Follow the following template to provide the answer.
+Follow the following template to provide the answer.
 
 ```reasoning
-Think step by step to achieve the goal in this section.
+Lets Reason to achieve the goal in this section.
 ```
+```output
+Provide the output in the desired output type.
+```
+"""
+
+CHAIN_OF_THOUGHT = """
+Follow the following template to provide the answer.
+
+```chain-of-thoughts
+Lets Think Step by Step to achieve the goal.
+```
+```output
+Provide the output in the desired output type.
+```
+"""
+
+REFLECTION = """
+Follow the following template to provide the answer.
+
+```chain-of-thoughts
+Lets Think Step by Step to achieve the goal.
+```
+```reflection
+Lets Reflect on The Thought Process, and check the validity of the thought process.
+```
+```output
+Provide the output in the desired output type.
+```
+"""
+
+PLANNER = """
+Follow the following template to provide the answer.
+
+```plan
+Step by Step Plan approach to achieve the goal. (No Code)
+```
+Execute the Plan as follows:
+for i, step in plan:
+```step_i
+Execution of the the step.
+```
+Finally,
+```output
+Provide the output in the desired output type.
+```
+"""
+
+REACT = ""
+
+EXTRACT_OUTPUT_INSTRUCTION = """
+Above output is not in the desired output format.
+Follow the following template to provide the answer.
+
 ```output
 Only provide the output in this section in the desired output type.
 ```
 """
 
-CHAIN_OF_THOUGHT = """
-Provide the answer in the desired output type definition. Follow the following template to provide the answer.
-
-```chain-of-thoughts
-Think Step by Step to achieve the goal.
-```
-```output
-Only provide the output in this section in the desired output type.
-```
-"""  # noqa E501
-
-REACT = ""
-
-REFLECTION = ""
-
-EXTRACT_OUTPUT_INSTRUCTION = """
-Above output is not in the desired output format. Extract the output in the desired format. Follow the following template to provide the answer.
-
-```output
-Only provide the output in this section in the desired output type.
-```
-"""  # noqa E501
-
 OUTPUT_FIX_INSTRUCTION = """
-Above output is not in the desired Output Type. Follow the following template to provide the answer.
+Above Error is encountered when trying to evaluate the Model Output.
+Follow the following template to provide the answer.
 
 ```debug
 Debug the error and fix the output.
 ```
 ```output
-Only provide the output in this section in the desired output type.
+Provide the output in the desired output type.
 ```
-"""  # noqa E501
+"""
 
 
 class BaseLLM:
@@ -83,20 +121,21 @@ class BaseLLM:
         "input_informations": "## Inputs",
         "context": "## Context",
         "type_explanations": "## Type Definitions",
-        "return_hint": "## Desired Output Type Definition",
-        "action": "# **Goal**:",
+        "return_hint": "## Output Type Definition",
+        "action": "# Goal:",
         "tools": "## Tools",
         "output_fix_error": "## Error Encountered",
         "output_fix_output": "## Previous Output",
         "extract_output_output": "## Model Output",
     }
-    SYSTEM_PROMPT = "You are an expert and sticks to the instructions given. You are instructed NOT to provide code snippets but to FOLLOW the instructions to achieve the goal in the desired output."  # noqa E501
+    SYSTEM_PROMPT = ""
     METHOD_PROMPTS = {
         "Normal": NORMAL,
         "Reason": REASON,
         "CoT": CHAIN_OF_THOUGHT,
         "ReAct": REACT,
         "Reflection": REFLECTION,
+        "Planner": PLANNER,
     }
     EXTRACT_OUTPUT_INSTRUCTION = EXTRACT_OUTPUT_INSTRUCTION
     OUTPUT_FIX_INSTRUCTION = OUTPUT_FIX_INSTRUCTION
@@ -236,7 +275,7 @@ class BaseLLM:
     def method_message(self, method: str) -> Message:
         """Get the method message."""
         return self.Message(
-            self.SYSTEM_ROLE, self.Message.Content([self.METHOD_PROMPTS[method]])
+            self.USER_ROLE, self.Message.Content([self.METHOD_PROMPTS[method]])
         )
 
     def __infer__(self, messages: list, model_params: dict) -> str:
@@ -304,11 +343,11 @@ class BaseLLM:
         """Extract the output from the model output."""
         if self.verbose:
             logger.info("Extracting output from the model output.")
-        messages = extract_output_prompt_info.get_messages(self, model_output)
-        if self.verbose:
-            logger.info(f"Output Extraction Input\n{self._msgs_to_str(messages)}")
-        output_extract_messages = [m.to_dict() for m in messages]
-        output_extract_output = self.__infer__(output_extract_messages, {})
+        output_extract_messages = extract_output_prompt_info.get_messages(
+            self, model_output
+        )
+        _messages = [m.to_dict() for m in output_extract_messages]
+        output_extract_output = self.__infer__(_messages, {})
         if self.verbose:
             logger.info(f"Extracted Output: {output_extract_output}")
         outputs = dict(re.findall(r"```(.*?)\n(.*?)```", model_output, re.DOTALL))
@@ -336,7 +375,7 @@ class BaseLLM:
                 _globals,
                 _locals,
                 error="",
-                num_retries=num_retries,
+                num_retries=num_retries + 1,
             )
         try:
             return eval(output, _globals, _locals)
@@ -361,12 +400,142 @@ class BaseLLM:
         """Fix the output string."""
         if self.verbose:
             logger.info(f"Error: {error}, Fixing the output.")
-        messages = output_fix_prompt_info.get_messages(self, output, error)
-        if self.verbose:
-            logger.info(f"Debugging Input\n{self._msgs_to_str(messages)}")
-        output_fix_messages = [m.to_dict() for m in messages]
+        output_fix_messages = [
+            m.to_dict()
+            for m in output_fix_prompt_info.get_messages(self, output, error)
+        ]
         output_fix_output = self.__infer__(output_fix_messages, {})
         if self.verbose:
             logger.info(f"Fixed Output: {output_fix_output}")
         outputs = dict(re.findall(r"```(.*?)\n(.*?)```", output_fix_output, re.DOTALL))
         return outputs["output"].strip()
+
+    def enhance(
+        self,
+        meaning: str = "",
+        info: list = [],
+        method: Literal[
+            "Normal", "Reason", "CoT", "ReAct", "Reflection", "Planner"
+        ] = "Normal",
+        tools: List[Union[Callable, Tool]] = [],
+        retries: int = 2,
+        return_additional_info: bool = False,
+        **kwargs: dict,
+    ) -> Callable:
+        """Convert a function into a semantic function with enhanced LLM capabilities.
+
+        Args:
+            meaning (str, optional): A description of the function's purpose or intended behavior.
+            info (list, optional): Additional information or context to be provided to the LLM. Defaults to [].
+            method (str, optional): The enhancement method to be applied. Defaults to "Normal". Options are: "Normal", "Reason", "CoT", "ReAct", "Reflection".
+            tools (List[Union[Callable, Tool]], optional): A list of functions or Tool objects that the LLM can use. Defaults to [].
+            retries (int, optional): The number of retry attempts for LLM operations. Defaults to 2.
+            return_additional_info (bool, optional): Whether to return the output and additional information. Defaults to False.
+            **kwargs (dict): Additional keyword arguments to be passed to the LLM.
+
+        Returns:
+            Callable: A wrapped version of the original function with enhanced LLM capabilities.
+
+        The enhanced function will utilize the specified LLM and method to process inputs and generate outputs.
+        The 'tools' parameter allows for the integration of external functions or APIs that the LLM can call upon during execution.
+        Proper error handling and retry logic are implemented to ensure robustness.
+
+        Example:
+        ```python
+        @enhance(
+            meaning="Summarize text",
+            model=my_llm_instance,
+            method="CoT",
+            temperature=0.7
+        )
+        def summarize_text(text: str) -> str:
+            ...
+        ```
+
+        For more information on available methods and their descriptions, please refer documentation.
+        """  # noqa: E501
+        curr_frame = inspect.currentframe()
+        if curr_frame:
+            frame = curr_frame.f_back
+        else:
+            raise Exception(
+                "Cannot get the current frame."
+            )  # Don't know whether this will happen
+        if not frame:
+            raise Exception(
+                "Cannot get the previous frame."
+            )  # Don't know whether this will happen
+        model_params = kwargs
+
+        def decorator(func: Callable) -> Callable:
+            def wrapper(**kwargs: dict) -> Any:  # noqa
+                informations = []
+                for i in info:
+                    var_name, semstr = get_semstr(frame, i)
+                    informations.append(Information(semstr, var_name, i))
+                _tools = [
+                    tool if isinstance(tool, Tool) else Tool(tool) for tool in tools
+                ]
+                input_informations = []
+                return_hint: OutputHint
+                for param, annotation in func.__annotations__.items():
+                    if isinstance(annotation, type) and issubclass(
+                        annotation, Semantic
+                    ):
+                        if param == "return":
+                            return_hint = OutputHint(
+                                annotation._meaning, annotation.wrapped_type
+                            )
+                            continue
+                        input_informations.append(
+                            Information(annotation._meaning, param, kwargs[param])
+                        )
+                    else:
+                        if param == "return":
+                            return_hint = OutputHint("", annotation)
+                            continue
+                        input_informations.append(Information("", param, kwargs[param]))
+                assert (
+                    return_hint
+                ), "Return type is not defined. Please define the return type."
+                action = f"{meaning} ({func.__name__})"
+                context = func.__doc__ if func.__doc__ else ""
+
+                types = set()
+                for i in [
+                    *informations,
+                    *input_informations,
+                    return_hint if return_hint else [],
+                ]:
+                    types.update(i.get_types())  # type: ignore
+                type_explanations = [TypeExplanation(frame, t) for t in types]
+                for t in type_explanations:
+                    types.update(t.get_nested_types())
+                type_explanations = [TypeExplanation(frame, t) for t in types]
+
+                inference_engine = InferenceEngine(
+                    model=self,
+                    method=method,
+                    prompt_info=PromptInfo(
+                        action=action,
+                        context=context,
+                        informations=informations,
+                        input_informations=input_informations,
+                        tools=_tools,
+                        return_hint=return_hint,
+                        type_explanations=type_explanations,
+                    ),
+                    extract_output_prompt_info=ExtractOutputPromptInfo(
+                        return_hint=return_hint, type_explanations=type_explanations
+                    ),
+                    output_fix_prompt_info=OutputFixPromptInfo(
+                        return_hint=return_hint,
+                        type_explanations=type_explanations,
+                    ),
+                    model_params=model_params,
+                )
+                return inference_engine.run(frame, retries + 1, return_additional_info)
+
+            return wrapper
+
+        return decorator

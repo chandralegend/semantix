@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from semantix import Semantic, enhance
+import semantix as sx
 from semantix.llms import OpenAI
 
-llm = OpenAI()
+llm = OpenAI(verbose=True)
 
 
 class Personality(Enum):
@@ -16,13 +16,15 @@ class Personality(Enum):
 
 @dataclass
 class Person:
+    """Person Class"""
+
     full_name: str
-    yod: Semantic[int, "Year of Death"]  # type: ignore
-    personality: Semantic[Personality, "Personality of the Person"]  # type: ignore
+    yod: sx.Semantic[int, "Year of Death"]  # type: ignore
+    personality: Personality
 
 
-@enhance("Get Person Information use common knowledge", llm)
-def get_person_info(name: Semantic[str, "Name of the Person"]) -> Person:  # type: ignore
+@llm.enhance("Get Person Information use common knowledge")
+def get_person_info(name: sx.Semantic[str, "Name of the Person"]) -> Person:  # type: ignore
     ...
 
 

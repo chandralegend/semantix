@@ -1,20 +1,15 @@
-from semantix import Semantic, enhance
 from semantix.llms import OpenAI
 
-llm = OpenAI()
+llm = OpenAI(verbose=True)
 
 
-@enhance(
+@llm.enhance(
     "Count the occurrences of a letter in a given word",
-    llm,
-    method="Reason",
+    method="Reflection",
     return_additional_info=True,
 )
-def count(word: str, letter: str) -> int:
-    """Seperate the word into letters and go through each
-    letter to check if it is equal to the given letter"""
-    ...
+def count(word: str, letter: str) -> int: ...
 
 
 answer = count(word="strawberry", letter="r")
-print(answer)
+print(answer.output)
