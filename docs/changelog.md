@@ -1,5 +1,10 @@
 # RELEASES
 
+## `0.1.7` - 2024-10-16
+- [FIX] Output Extraction Not Working
+- [IMPROVEMENT] Now you can get the `enhance` decorator straight from the LLM
+- [IMPROVEMENT] Prompts are more simplified to make it token efficient
+
 ## `0.1.6` - 2024-09-23
 - [FIX] Fixed Anthropic, Cohere Integration
 - [FIX] Fixed Self Healing Mechanism

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "semantix"
-version = "0.1.6"
+version = "0.1.7"
 description = "Give Superpowers to your python function. GenAI Application development made easy."
 authors = ["Chandra Irugalbandara <irugalbandara@ascii.ai>"]
 maintainers = ["Chandra Irugalbandara <irugalbandara@ascii.ai>"]
